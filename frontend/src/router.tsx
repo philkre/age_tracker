@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, Link, Outlet } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
+import { ChallengeNavLink } from "./components/ChallengeBanner";
 import { Spinner } from "./components/ui";
 import { Feed } from "./pages/Feed";
 
@@ -25,6 +26,9 @@ const rootRoute = createRootRoute({
               TopGun <span className="font-normal text-muted">Training</span>
             </span>
           </Link>
+          <nav className="flex items-center gap-1">
+            <ChallengeNavLink />
+          </nav>
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">
