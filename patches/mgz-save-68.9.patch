@@ -1,0 +1,20 @@
+--- a/mgz/fast/header.py
++++ b/mgz/fast/header.py
+@@ -468,6 +468,8 @@
+             data.read(8)
+         if save >= 64.3:
+             data.read(4)
++        if save >= 68.9:
++            de_string(data)  # new per-player string in save 68.9
+ 
+         players.append(dict(
+             number=number,
+@@ -553,6 +555,8 @@
+         data.read(8)
+         if save >= 37:
+             timestamp, x = unpack('<II', data)
++    if save >= 68.9:
++        data.read(8)  # new in 68.9 (another timestamp + 4 bytes)
+     rms_mod_id = None
+     rms_filename = None
+     for s in strings:
