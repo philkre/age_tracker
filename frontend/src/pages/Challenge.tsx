@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   ApiError,
+  del,
   challengeByIdQuery,
   challengeQuery,
   challengesQuery,
@@ -99,27 +100,35 @@ function HistoryCard({ c }: { c: ChallengeSummary }) {
   const pct = Math.round((100 * c.used) / c.total);
   const status = statusOf(c);
   const end = c.completed_at ?? c.ended_at;
+  // Title link is stretched over the card; the delete control sits above it (z-10).
   return (
-    <Link
-      to="/challenge/$challengeId"
-      params={{ challengeId: String(c.id) }}
-      className="block rounded-xl border border-line bg-surface p-4 transition-colors hover:border-faint hover:bg-surface-2 sm:p-5"
-    >
+    <article className="relative isolate rounded-xl border border-line bg-surface p-4 transition-colors hover:border-faint hover:bg-surface-2 sm:p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
-          <h2 className="truncate font-semibold">{c.name}</h2>
+          <h2 className="truncate font-semibold">
+            <Link
+              to="/challenge/$challengeId"
+              params={{ challengeId: String(c.id) }}
+              className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-accent"
+            >
+              {c.name}
+            </Link>
+          </h2>
           <p className="tabular text-sm text-muted">
             {date(c.started_at)}
             {end ? ` – ${date(end)}` : " – now"}
           </p>
         </div>
-        <span
-          className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            status === "Live" ? "bg-win/12 text-win" : status === "Completed" ? "bg-accent/12 text-accent" : "bg-surface-2 text-muted"
-          }`}
-        >
-          {status}
-        </span>
+        <div className="relative z-10 flex items-center gap-2">
+          {!c.active && <DeleteChallenge c={c} />}
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              status === "Live" ? "bg-win/12 text-win" : status === "Completed" ? "bg-accent/12 text-accent" : "bg-surface-2 text-muted"
+            }`}
+          >
+            {status}
+          </span>
+        </div>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
         <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
@@ -131,7 +140,38 @@ function HistoryCard({ c }: { c: ChallengeSummary }) {
         civs · {c.games} games · {c.wins}–{c.losses}
         {c.repeats > 0 && ` · ${c.repeats} repeats`}
       </p>
-    </Link>
+    </article>
+  );
+}
+
+/** Remove a past challenge from the history, with an inline confirm. Games and sessions stay. */
+function DeleteChallenge({ c }: { c: ChallengeSummary }) {
+  const [confirming, setConfirming] = useState(false);
+  const remove = useChallengeAction(() => del(`/challenges/${c.id}`));
+  const btn = "rounded-md px-2.5 py-1 text-xs font-medium disabled:opacity-50";
+
+  if (!confirming)
+    return (
+      <button onClick={() => setConfirming(true)} className={`${btn} text-muted hover:text-loss`}>
+        Delete
+      </button>
+    );
+  return (
+    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Confirm delete">
+      <span className="text-xs text-muted">Delete? Games stay.</span>
+      <button
+        autoFocus
+        disabled={remove.isPending}
+        onClick={() => remove.mutate(undefined, { onSettled: () => setConfirming(false) })}
+        className={`${btn} bg-loss text-white`}
+      >
+        {remove.isPending ? "…" : "Yes, delete"}
+      </button>
+      <button disabled={remove.isPending} onClick={() => setConfirming(false)} className={`${btn} text-muted hover:text-ink`}>
+        Cancel
+      </button>
+      {remove.error && <span className="text-xs text-loss">{remove.error.message}</span>}
+    </div>
   );
 }
 
@@ -244,7 +284,6 @@ function StartPanel({ previous }: { previous: Challenge | null }) {
 }
 
 function ActiveHeader({ ch }: { ch: Challenge }) {
-  const end = useChallengeAction(() => post<Challenge>("/challenge/end"));
   const pct = Math.round((100 * ch.used) / ch.total);
   return (
     <section className="rounded-xl border border-line bg-surface p-4 sm:p-5">
@@ -262,18 +301,7 @@ function ActiveHeader({ ch }: { ch: Challenge }) {
             since {date(ch.started_at)} · {time(ch.started_at)}
           </p>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <button
-            onClick={() => {
-              if (confirm(`End "${ch.name}" now? Progress is kept.`)) end.mutate();
-            }}
-            disabled={end.isPending}
-            className="rounded-md border border-line px-3 py-1.5 text-xs text-muted hover:text-ink disabled:opacity-50"
-          >
-            End challenge
-          </button>
-          {end.error && <p className="text-xs text-loss">{end.error.message}</p>}
-        </div>
+        <ChallengeControls ch={ch} />
       </div>
 
       <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-surface-2">
@@ -286,6 +314,55 @@ function ActiveHeader({ ch }: { ch: Challenge }) {
         <Stat label="Est. games left" value={Math.ceil((ch.total - ch.used) / MEMBERS.length)} sub="at 4 new civs/game" />
       </div>
     </section>
+  );
+}
+
+/**
+ * End with an inline confirm step (native confirm() is suppressed in embedded browsers and silently
+ * returns false). If nothing was played yet, the confirm offers to discard the challenge instead.
+ */
+function ChallengeControls({ ch }: { ch: Challenge }) {
+  const [confirming, setConfirming] = useState(false);
+  const end = useChallengeAction(() => post<Challenge>("/challenge/end"));
+  const discard = useChallengeAction(() => post<void>("/challenge/discard"));
+  const busy = end.isPending || discard.isPending;
+  const error = end.error ?? discard.error;
+  const empty = ch.games === 0;
+  const btn = "rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-50";
+  const run = (m: typeof end | typeof discard) => m.mutate(undefined, { onSettled: () => setConfirming(false) });
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      {!confirming ? (
+        <button onClick={() => setConfirming(true)} className={`${btn} border border-line text-muted hover:text-ink`}>
+          End challenge
+        </button>
+      ) : (
+        <div className="flex flex-wrap items-center justify-end gap-2" role="group" aria-label="Confirm">
+          <span className="text-xs text-muted">
+            {empty ? "Nothing played yet. Discard it?" : "End now? Progress is kept."}
+          </span>
+          {empty ? (
+            <>
+              <button autoFocus disabled={busy} onClick={() => run(discard)} className={`${btn} bg-loss text-white`}>
+                {discard.isPending ? "…" : "Yes, discard"}
+              </button>
+              <button disabled={busy} onClick={() => run(end)} className={`${btn} border border-line text-muted hover:text-ink`}>
+                {end.isPending ? "…" : "No, just end"}
+              </button>
+            </>
+          ) : (
+            <button autoFocus disabled={busy} onClick={() => run(end)} className={`${btn} bg-accent text-bg`}>
+              {end.isPending ? "…" : "Yes, end"}
+            </button>
+          )}
+          <button disabled={busy} onClick={() => setConfirming(false)} className={`${btn} text-muted hover:text-ink`}>
+            Cancel
+          </button>
+        </div>
+      )}
+      {error && <p className="text-xs text-loss">{error.message}</p>}
+    </div>
   );
 }
 

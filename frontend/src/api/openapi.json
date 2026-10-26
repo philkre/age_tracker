@@ -337,6 +337,37 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Delete Challenge",
+        "description": "Remove a past challenge from the history. Its games stay; only the challenge window is dropped.",
+        "operationId": "delete_challenge_api_challenges__challenge_id__delete",
+        "parameters": [
+          {
+            "name": "challenge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Challenge Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/challenge/end": {
@@ -353,6 +384,18 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/challenge/discard": {
+      "post": {
+        "summary": "Discard Challenge",
+        "description": "Throw away an active challenge that has no games yet (started by mistake).",
+        "operationId": "discard_challenge_api_challenge_discard_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           }
         }
       }

@@ -85,9 +85,18 @@ export const challengeByIdQuery = (id: number) =>
   });
 
 /** POST JSON to the API. Throws ApiError with the server's detail message. */
-export async function post<T>(path: string, body?: unknown): Promise<T> {
+export function post<T>(path: string, body?: unknown): Promise<T> {
+  return send<T>("POST", path, body);
+}
+
+/** DELETE on the API (204 -> undefined). */
+export function del(path: string): Promise<void> {
+  return send<void>("DELETE", path);
+}
+
+async function send<T>(method: "POST" | "DELETE", path: string, body?: unknown): Promise<T> {
   const res = await fetch(`/api${path}`, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -95,5 +104,6 @@ export async function post<T>(path: string, body?: unknown): Promise<T> {
     const detail = await res.json().then((j) => j.detail as string, () => res.statusText);
     throw new ApiError(res.status, detail);
   }
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }

@@ -177,3 +177,34 @@ def test_start_without_passphrase_uses_default_name(client):
     assert r.json()["name"] == "Gotta play em all!"
     assert client.post("/api/challenge/end").status_code == 200
 
+
+def test_discard_only_without_games(client):
+    # Fresh challenge, no games yet -> discard deletes it entirely.
+    assert client.post("/api/challenge", json={"started_at": "2027-01-01T00:00:00Z"}).status_code == 201
+    assert client.post("/api/challenge/discard").status_code == 204
+    assert client.get("/api/challenge").json() is None
+    assert client.get("/api/challenges").json() == []
+    assert client.post("/api/challenge/discard").status_code == 404
+
+    # Games already played -> refuse, keep it.
+    client.post("/api/challenge", json={"started_at": "2026-10-24T09:00:00Z"})
+    r = client.post("/api/challenge/discard")
+    assert r.status_code == 409 and "end the challenge" in r.json()["detail"]
+    assert client.get("/api/challenge").json()["active"]
+
+
+def test_delete_past_challenge(client):
+    client.post("/api/challenge", json={"name": "Old", "started_at": "2026-10-24T09:00:00Z"})
+    old_id = client.get("/api/challenge").json()["id"]
+    assert client.delete(f"/api/challenges/{old_id}").status_code == 409  # still running
+    client.post("/api/challenge/end")
+
+    sessions_before = client.get("/api/sessions?limit=100").json()["total"]
+    assert client.delete(f"/api/challenges/{old_id}").status_code == 204
+    assert client.get("/api/challenges").json() == []
+    assert client.get(f"/api/challenges/{old_id}").status_code == 404
+    assert client.delete(f"/api/challenges/{old_id}").status_code == 404
+    # games and sessions are untouched, badges disappear
+    s = client.get("/api/sessions?limit=100").json()
+    assert s["total"] == sessions_before and all(x["challenge"] is None for x in s["items"])
+

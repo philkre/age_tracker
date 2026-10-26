@@ -147,6 +147,17 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
                 raise HTTPException(404, "challenge not found")
             return challenge.board(db, ch)
 
+    @app.delete("/api/challenges/{challenge_id}", status_code=204)
+    def delete_challenge(challenge_id: int):
+        """Remove a past challenge from the history. Its games stay; only the challenge window is dropped."""
+        with Session() as db:
+            try:
+                found = challenge.delete_challenge(db, challenge_id)
+            except ValueError as e:
+                raise HTTPException(409, str(e))
+            if not found:
+                raise HTTPException(404, "challenge not found")
+
     @app.post("/api/challenge", status_code=201, response_model=schemas.ChallengeOut)
     def start_challenge(body: schemas.ChallengeStart):
         # Open on purpose: any of us can start/end a challenge from the site, no passphrase.
@@ -167,6 +178,17 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
             if ch is None:
                 raise HTTPException(404, "no active challenge")
             return challenge.board(db, ch)
+
+    @app.post("/api/challenge/discard", status_code=204)
+    def discard_challenge():
+        """Throw away an active challenge that has no games yet (started by mistake)."""
+        with Session() as db:
+            try:
+                ch = challenge.discard_challenge(db)
+            except ValueError as e:
+                raise HTTPException(409, str(e))
+            if ch is None:
+                raise HTTPException(404, "no active challenge")
 
     @app.post("/api/sync", status_code=202, response_model=schemas.Queued)
     def trigger_sync(background: BackgroundTasks, authorization: str | None = Header(default=None)):

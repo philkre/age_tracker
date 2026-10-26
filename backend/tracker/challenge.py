@@ -45,6 +45,30 @@ def end_challenge(db: Session) -> Challenge | None:
     return ch
 
 
+def discard_challenge(db: Session) -> Challenge | None:
+    """Delete the active challenge if no game has been played in it yet. Raises ValueError otherwise."""
+    ch = active_challenge(db)
+    if ch is None:
+        return None
+    if _games(db, ch):
+        raise ValueError("games were already played; end the challenge instead")
+    db.delete(ch)
+    db.commit()
+    return ch
+
+
+def delete_challenge(db: Session, challenge_id: int) -> bool:
+    """Delete a finished challenge from the history (games are untouched). Raises ValueError if it's active."""
+    ch = db.get(Challenge, challenge_id)
+    if ch is None:
+        return False
+    if ch.ended_at is None and ch.completed_at is None:
+        raise ValueError("challenge is still running; end or discard it first")
+    db.delete(ch)
+    db.commit()
+    return True
+
+
 def _games(db: Session, ch: Challenge) -> list[Game]:
     q = db.query(Game).filter(Game.started_at >= ch.started_at)
     end = ch.ended_at or ch.completed_at

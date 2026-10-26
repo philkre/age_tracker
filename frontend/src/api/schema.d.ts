@@ -155,7 +155,11 @@ export interface paths {
         get: operations["get_challenge_by_id_api_challenges__challenge_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Challenge
+         * @description Remove a past challenge from the history. Its games stay; only the challenge window is dropped.
+         */
+        delete: operations["delete_challenge_api_challenges__challenge_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -172,6 +176,26 @@ export interface paths {
         put?: never;
         /** End Challenge */
         post: operations["end_challenge_api_challenge_end_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/challenge/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Discard Challenge
+         * @description Throw away an active challenge that has no games yet (started by mistake).
+         */
+        post: operations["discard_challenge_api_challenge_discard_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -908,6 +932,35 @@ export interface operations {
             };
         };
     };
+    delete_challenge_api_challenges__challenge_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                challenge_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     end_challenge_api_challenge_end_post: {
         parameters: {
             query?: never;
@@ -925,6 +978,24 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ChallengeOut"];
                 };
+            };
+        };
+    };
+    discard_challenge_api_challenge_discard_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
