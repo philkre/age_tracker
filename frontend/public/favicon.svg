@@ -9,9 +9,9 @@
       .p { fill: #09090b; }
     }
   </style>
-  <path class="g" d="M4 27.5h24M10 27.5 16 14l6 13.5M4.5 8.5 21.5 17"/>
+  <path class="g" d="M4 27.5h24M10 27.5 16 14l6 13.5M4.5 8.5 23 17.75"/>
   <path class="g" d="M4.5 8.5 6.5 14" style="stroke-width:1.5"/>
-  <rect class="f" x="19" y="16.5" width="6" height="6" rx="1.2"/>
+  <rect class="f" x="20.5" y="17.3" width="6" height="6" rx="1.2"/>
   <circle class="f" cx="7" cy="15.5" r="2"/>
-  <circle class="p" cx="16" cy="14" r="1.6"/>
+  <circle class="p" cx="16" cy="14" r="1.1"/>
 </svg>
