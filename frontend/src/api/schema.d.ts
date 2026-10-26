@@ -334,6 +334,12 @@ export interface components {
             play_time_s: number;
             /** Durations S */
             durations_s: number[];
+            /** Game Ids */
+            game_ids: number[];
+            /** Game Maps */
+            game_maps: string[];
+            /** Game Parsed */
+            game_parsed: boolean[];
             /** Team Rating Path */
             team_rating_path: (number | null)[];
             /** Opp Ratings */
@@ -384,6 +390,12 @@ export interface components {
             play_time_s: number;
             /** Durations S */
             durations_s: number[];
+            /** Game Ids */
+            game_ids: number[];
+            /** Game Maps */
+            game_maps: string[];
+            /** Game Parsed */
+            game_parsed: boolean[];
             /** Team Rating Path */
             team_rating_path: (number | null)[];
             /** Opp Ratings */

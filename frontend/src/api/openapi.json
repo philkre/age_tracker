@@ -1006,6 +1006,27 @@
             "type": "array",
             "title": "Durations S"
           },
+          "game_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Game Ids"
+          },
+          "game_maps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Game Maps"
+          },
+          "game_parsed": {
+            "items": {
+              "type": "boolean"
+            },
+            "type": "array",
+            "title": "Game Parsed"
+          },
           "team_rating_path": {
             "items": {
               "anyOf": [
@@ -1071,6 +1092,9 @@
           "results",
           "play_time_s",
           "durations_s",
+          "game_ids",
+          "game_maps",
+          "game_parsed",
           "team_rating_path",
           "opp_ratings",
           "maps",
@@ -1164,6 +1188,27 @@
             "type": "array",
             "title": "Durations S"
           },
+          "game_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Game Ids"
+          },
+          "game_maps": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Game Maps"
+          },
+          "game_parsed": {
+            "items": {
+              "type": "boolean"
+            },
+            "type": "array",
+            "title": "Game Parsed"
+          },
           "team_rating_path": {
             "items": {
               "anyOf": [
@@ -1222,6 +1267,9 @@
           "results",
           "play_time_s",
           "durations_s",
+          "game_ids",
+          "game_maps",
+          "game_parsed",
           "team_rating_path",
           "opp_ratings",
           "maps",

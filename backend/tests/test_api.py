@@ -49,6 +49,8 @@ def test_sessions_feed(env):
     latest = sessions[0]
     assert latest["wins"] + latest["losses"] == latest["games"]
     assert latest["results"].count(True) == latest["wins"]
+    assert len(latest["game_ids"]) == len(latest["game_maps"]) == len(latest["game_parsed"]) == latest["games"]
+    assert latest["game_ids"][-1] == 516462729 and latest["game_parsed"][-1] is True
     assert {m["name"] for m in latest["members"]} == {"Cribbeltz", "Maverick", "Sundown", "johannesnagel"}
     assert len(latest["durations_s"]) == latest["games"]
     assert len(latest["team_rating_path"]) == latest["games"] + 1

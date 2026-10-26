@@ -38,6 +38,9 @@ class SessionSummary(BaseModel):
     results: list[bool | None]  # per game, in order
     play_time_s: float
     durations_s: list[float]  # real-time length per game, in order
+    game_ids: list[int]  # match ids, in order
+    game_maps: list[str]  # map name per game
+    game_parsed: list[bool]  # replay analysed (heatmap available) per game
     team_rating_path: list[float | None]  # our avg rating before game 1, then after each game
     opp_ratings: list[float | None]  # opponents' avg rating per game
     maps: list[str]
