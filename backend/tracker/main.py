@@ -6,13 +6,14 @@ from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import sessionmaker
 
 from tracker.config import MEMBERS, Settings, settings as default_settings
 from tracker.db import init_db, make_engine, make_sessionmaker
 from tracker import schemas
-from tracker.models import Game, TrainingSession
+from tracker.models import Game, GameMap, TrainingSession
 from tracker.stats import game_row, session_summary
 from tracker.sync import run_sync
 
@@ -44,6 +45,7 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
             task.cancel()
 
     app = FastAPI(title="AoE2 Training Tracker", lifespan=lifespan)
+    app.add_middleware(GZipMiddleware, minimum_size=1024)  # map payloads are ~140 KB of JSON
     if settings.cors_origins:
         app.add_middleware(
             CORSMiddleware,
@@ -99,6 +101,14 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
             if g is None:
                 raise HTTPException(404, "game not found")
             return game_row(g, full=True)
+
+    @app.get("/api/games/{match_id}/map", response_model=schemas.GameMapOut)
+    def get_game_map(match_id: int):
+        with Session() as db:
+            gm = db.get(GameMap, match_id)
+            if gm is None:
+                raise HTTPException(404, "no map data (replay not parsed)")
+            return gm.data
 
     @app.post("/api/sync", status_code=202, response_model=schemas.Queued)
     def trigger_sync(background: BackgroundTasks, authorization: str | None = Header(default=None)):

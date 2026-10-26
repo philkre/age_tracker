@@ -176,6 +176,45 @@
         }
       }
     },
+    "/api/games/{match_id}/map": {
+      "get": {
+        "summary": "Get Game Map",
+        "operationId": "get_game_map_api_games__match_id__map_get",
+        "parameters": [
+          {
+            "name": "match_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Match Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameMapOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sync": {
       "post": {
         "summary": "Trigger Sync",
@@ -225,6 +264,67 @@
   },
   "components": {
     "schemas": {
+      "GameMapOut": {
+        "properties": {
+          "dimension": {
+            "type": "integer",
+            "title": "Dimension"
+          },
+          "scale": {
+            "type": "integer",
+            "title": "Scale"
+          },
+          "alphabet": {
+            "type": "string",
+            "title": "Alphabet"
+          },
+          "palette": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Palette"
+          },
+          "terrain": {
+            "type": "string",
+            "title": "Terrain"
+          },
+          "starts": {
+            "additionalProperties": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Starts"
+          },
+          "commands": {
+            "additionalProperties": {
+              "items": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Commands"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dimension",
+          "scale",
+          "alphabet",
+          "palette",
+          "terrain",
+          "starts",
+          "commands"
+        ],
+        "title": "GameMapOut"
+      },
       "GameOut": {
         "properties": {
           "match_id": {
@@ -766,20 +866,6 @@
           "military_queued": {
             "type": "integer",
             "title": "Military Queued"
-          },
-          "rating_path": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "type": "array",
-            "title": "Rating Path"
           }
         },
         "type": "object",
@@ -798,8 +884,7 @@
           "avg_castle_s",
           "best_castle_s",
           "villagers_queued",
-          "military_queued",
-          "rating_path"
+          "military_queued"
         ],
         "title": "MemberSummary"
       },
@@ -921,6 +1006,34 @@
             "type": "array",
             "title": "Durations S"
           },
+          "team_rating_path": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Team Rating Path"
+          },
+          "opp_ratings": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Opp Ratings"
+          },
           "maps": {
             "items": {
               "type": "string"
@@ -958,6 +1071,8 @@
           "results",
           "play_time_s",
           "durations_s",
+          "team_rating_path",
+          "opp_ratings",
           "maps",
           "replays_parsed",
           "members",
@@ -1049,6 +1164,34 @@
             "type": "array",
             "title": "Durations S"
           },
+          "team_rating_path": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Team Rating Path"
+          },
+          "opp_ratings": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Opp Ratings"
+          },
           "maps": {
             "items": {
               "type": "string"
@@ -1079,6 +1222,8 @@
           "results",
           "play_time_s",
           "durations_s",
+          "team_rating_path",
+          "opp_ratings",
           "maps",
           "replays_parsed",
           "members"

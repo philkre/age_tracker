@@ -5,8 +5,8 @@ import { sessionsQuery, type SessionSummary } from "../api/client";
 import { clock, date, hours, pct, sessionTitle, time } from "../lib/format";
 import { memberColor } from "../lib/members";
 import { useTimeMode } from "../lib/timeMode";
-import { SessionRoute } from "../components/SessionRoute";
-import { Delta, ErrorBox, MemberDot, ResultStrip, Spinner, Stat } from "../components/ui";
+import { SessionSplits } from "../components/SessionSplits";
+import { Delta, ErrorBox, MemberDot, Spinner, Stat } from "../components/ui";
 
 export function Feed() {
   const q = useInfiniteQuery(sessionsQuery);
@@ -76,10 +76,9 @@ function SessionCard({ s }: { s: SessionSummary }) {
             {date(s.started_at)} · {time(s.started_at)}–{time(s.ended_at)}
           </p>
         </div>
-        <ResultStrip results={s.results} />
       </div>
 
-      <SessionRoute s={s} />
+      <SessionSplits s={s} />
 
       <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
         <Stat label="Record" value={`${s.wins}–${s.losses}`} sub={`${pct(s.wins, s.wins + s.losses)} wins`} />

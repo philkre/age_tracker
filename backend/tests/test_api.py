@@ -51,10 +51,12 @@ def test_sessions_feed(env):
     assert latest["results"].count(True) == latest["wins"]
     assert {m["name"] for m in latest["members"]} == {"Cribbeltz", "Maverick", "Sundown", "johannesnagel"}
     assert len(latest["durations_s"]) == latest["games"]
-    for m in latest["members"]:
-        assert len(m["rating_path"]) == latest["games"] + 1
-        if m["rating_delta"] is not None and None not in m["rating_path"]:
-            assert m["rating_path"][-1] - m["rating_path"][0] == m["rating_delta"]
+    assert len(latest["team_rating_path"]) == latest["games"] + 1
+    assert len(latest["opp_ratings"]) == latest["games"]
+    path = latest["team_rating_path"]
+    deltas = [m["rating_delta"] for m in latest["members"]]
+    if None not in path and None not in deltas:
+        assert path[-1] - path[0] == pytest.approx(sum(deltas) / len(deltas), abs=0.1)
 
 
 def test_session_detail_and_game(env):
@@ -77,3 +79,12 @@ def test_404s(env):
     client, _ = env
     assert client.get("/api/sessions/9999").status_code == 404
     assert client.get("/api/games/1").status_code == 404
+
+
+def test_game_map(env):
+    client, _ = env
+    m = client.get("/api/games/516462729/map").json()
+    assert m["dimension"] == 220
+    assert set(m["commands"]) >= {"252396", "1308804"}
+    assert client.get("/api/games/516459710/map").status_code == 404  # replay not parsed
+

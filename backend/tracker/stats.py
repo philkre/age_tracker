@@ -22,15 +22,16 @@ def _min(values):
     return min(values) if values else None
 
 
-def _rating_path(games: list[Game], profile_id: int) -> list[int | None]:
-    """Rating before the first game, then after each game (None where the member sat out)."""
-    path: list[int | None] = []
-    for g in games:
-        p = next((p for p in g.players if p.profile_id == profile_id), None)
-        if not path:
-            path.append(p.rating if p else None)
-        path.append(p.rating_after if p else None)
-    return path
+def _team_avg(g: Game, ours: bool, after: bool = False) -> float | None:
+    vals = [p.rating_after if after else p.rating for p in g.players if (p.team == g.our_team) == ours]
+    return _avg(vals)
+
+
+def _team_rating_path(games: list[Game]) -> list[float | None]:
+    """Our team's average rating before the first game, then after each game."""
+    if not games:
+        return []
+    return [_team_avg(games[0], True)] + [_team_avg(g, True, after=True) for g in games]
 
 
 def member_summary(games: list[Game]) -> list[dict]:
@@ -58,7 +59,6 @@ def member_summary(games: list[Game]) -> list[dict]:
             "best_castle_s": _min(r.castle_s for r in rows),
             "villagers_queued": sum(r.villagers_queued or 0 for r in rows),
             "military_queued": sum(r.military_queued or 0 for r in rows),
-            "rating_path": _rating_path(games, m.profile_id),
         })
     return out
 
@@ -76,6 +76,8 @@ def session_summary(s: TrainingSession) -> dict:
         "results": [g.won for g in games],
         "play_time_s": sum(g.duration_real_s or 0 for g in games),
         "durations_s": [g.duration_real_s or 0 for g in games],
+        "team_rating_path": _team_rating_path(games),
+        "opp_ratings": [_team_avg(g, False) for g in games],
         "maps": sorted({g.map_name for g in games}),
         "replays_parsed": sum(1 for g in games if g.replay_status == "parsed"),
         "members": member_summary(games),

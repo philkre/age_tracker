@@ -62,22 +62,21 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-/* Session route draws in left to right, like a replayed track. */
-@keyframes route-reveal {
+/* Session split tiles grow in one after another. */
+@keyframes split-in {
   from {
-    clip-path: inset(-8px 100% -8px -8px);
-  }
-  to {
-    clip-path: inset(-8px -8px -8px -8px);
+    opacity: 0;
+    transform: translateY(4px);
   }
 }
 
-.route-reveal {
-  animation: route-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+.split-in {
+  animation: split-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .route-reveal {
+  .split-in {
     animation: none;
   }
 }

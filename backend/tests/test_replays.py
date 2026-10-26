@@ -119,3 +119,40 @@ def test_parses_older_save_version():
     assert len(s["players"]) == 6
     assert all(p["eapm"] for p in s["players"].values())
     assert 252396 in s["players"]
+
+
+def test_extract_map(stats):
+    m = stats["map"]
+    assert m["dimension"] == 220
+    side = -(-220 // m["scale"])
+    assert len(m["terrain"]) == side * side
+    assert all(c in m["alphabet"][: len(m["palette"])] for c in set(m["terrain"]))
+    sx, sy = m["starts"][252396]
+    assert 190 < sx < 210 and 115 < sy < 135  # Cribbeltz' starting villagers
+    cmds = m["commands"][252396]
+    assert len(cmds) > 100
+    t, x, y, kind = cmds[0]
+    assert 0 <= x <= 220 and 0 <= y <= 220 and kind in (0, 1)
+    assert [c[0] for c in cmds] == sorted(c[0] for c in cmds)
+
+
+def test_process_pending_stores_map(db, companion_matches, replay_zip, tmp_path):
+    from tracker.models import GameMap
+
+    import_matches(db, [companion_matches[0]])
+    process_pending(db, _client(lambda r: httpx.Response(200, content=_zip_bytes(replay_zip))), tmp_path)
+    gm = db.get(GameMap, MATCH)
+    assert gm is not None and gm.data["dimension"] == 220
+    assert "252396" in gm.data["commands"] or 252396 in gm.data["commands"]
+
+
+def test_reparse_refreshes_parsed_games(db, companion_matches, replay_zip, tmp_path):
+    from tracker.models import GameMap
+    from tracker.replays import reparse
+
+    import_matches(db, [companion_matches[0]])
+    process_pending(db, _client(lambda r: httpx.Response(200, content=_zip_bytes(replay_zip))), tmp_path)
+    db.get(GameMap, MATCH).data = {"stale": True}
+    db.commit()
+    assert reparse(db) == [MATCH]
+    assert db.get(GameMap, MATCH).data["dimension"] == 220

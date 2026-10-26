@@ -1,16 +1,19 @@
 """Download replays by match id and extract per-player stats with (patched) mgz."""
 
 import io
+import json
 import logging
+import math
 import zipfile
 from collections import Counter
+from functools import cache
 from pathlib import Path
 
 import httpx
 from sqlalchemy.orm import Session
 
 from mgz.model import parse_match
-from tracker.models import Game, ReplayStatus
+from tracker.models import Game, GameMap, ReplayStatus
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +24,13 @@ MAX_ATTEMPTS = 5
 ECO_UNITS = frozenset({"Villager", "Fishing Ship", "Trade Cart", "Trade Cog", "Transport Ship"})
 AGE_TECHS = frozenset({"Feudal Age", "Castle Age", "Imperial Age"})
 AGE_FIELDS = {"FEUDAL_AGE": "feudal_s", "CASTLE_AGE": "castle_s", "IMPERIAL_AGE": "imperial_s"}
+
+# Heatmap: positioned commands (0 = move, 1 = order: attack/gather/garrison on a target).
+COMMAND_KINDS = {"MOVE": 0, "ORDER": 1}
+# Minimap tiles per side, at most; bigger maps are downsampled.
+MINIMAP_MAX_SIDE = 120
+MINIMAP_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+UNKNOWN_TERRAIN_COLOR = "#5f7f45"
 
 
 class ReplayNotFound(Exception):
@@ -118,11 +128,78 @@ def extract_stats(path: Path) -> dict:
         }
         players[p.profile_id] = s
 
-    return {"duration_game_s": match.duration.total_seconds(), "players": players}
+    return {
+        "duration_game_s": match.duration.total_seconds(),
+        "players": players,
+        "map": extract_map(match),
+    }
+
+
+@cache
+def _terrain_colors() -> dict[int, str]:
+    """DE terrain id -> minimap colour, from aocref's dataset (same source mgz uses)."""
+    import aocref
+
+    path = Path(aocref.__file__).parent / "data" / "datasets" / "100.json"
+    terrain = json.loads(path.read_text())["terrain"]
+    return {int(k): v["colors"]["level"] for k, v in terrain.items()}
+
+
+def extract_map(match) -> dict:
+    """Terrain minimap (palette + one char per cell) and every positioned move/order command."""
+    dim = match.map.dimension
+    scale = max(1, math.ceil(dim / MINIMAP_MAX_SIDE))
+    side = math.ceil(dim / scale)
+    colors = _terrain_colors()
+
+    # Majority-free downsampling: take the top-left tile of each scale x scale block.
+    palette: list[str] = []
+    index: dict[str, int] = {}
+    cells = []
+    for cy in range(side):
+        for cx in range(side):
+            tile = match.map.tiles[(cy * scale) * dim + cx * scale]
+            color = colors.get(tile.terrain, UNKNOWN_TERRAIN_COLOR)
+            if color not in index:
+                index[color] = len(palette)
+                palette.append(color)
+            cells.append(MINIMAP_ALPHABET[index[color]])
+
+    starts = {}
+    for p in match.players:
+        vils = [o.position for o in p.objects if o.name == "Villager" and o.position.x is not None]
+        if vils:
+            starts[p.profile_id] = [
+                round(sum(v.x for v in vils) / len(vils), 1),
+                round(sum(v.y for v in vils) / len(vils), 1),
+            ]
+
+    commands: dict[int, list] = {p.profile_id: [] for p in match.players}
+    for a in match.actions:
+        kind = COMMAND_KINDS.get(a.type.name)
+        if kind is None or a.player is None or a.position is None or a.position.x is None:
+            continue
+        commands[a.player.profile_id].append(
+            [round(a.timestamp.total_seconds()), round(a.position.x, 1), round(a.position.y, 1), kind]
+        )
+
+    return {
+        "dimension": dim,
+        "scale": scale,
+        "alphabet": MINIMAP_ALPHABET,
+        "palette": palette,
+        "terrain": "".join(cells),
+        "starts": starts,
+        "commands": commands,
+    }
 
 
 def apply_stats(game: Game, stats: dict) -> None:
     game.duration_game_s = stats["duration_game_s"]
+    if game.map_data is None:
+        game.map_data = GameMap(data=stats["map"])
+    else:
+        game.map_data.data = stats["map"]
     for gp in game.players:
         s = stats["players"].get(gp.profile_id)
         if s:
@@ -175,3 +252,19 @@ def process_pending(db: Session, client: httpx.Client, replay_dir: Path, limit: 
             parsed.append(game.match_id)
         db.commit()
     return parsed
+
+
+def reparse(db: Session, limit: int | None = None) -> list[int]:
+    """Re-extract stats from already downloaded replays (after extractor changes)."""
+    q = db.query(Game).filter(Game.replay_status == ReplayStatus.PARSED, Game.replay_path.is_not(None))
+    done = []
+    for game in q.limit(limit).all() if limit else q.all():
+        try:
+            apply_stats(game, extract_stats(Path(game.replay_path)))
+        except Exception as e:
+            log.warning("reparse failed for %s: %s", game.match_id, e)
+            continue
+        db.commit()
+        done.append(game.match_id)
+    return done
+

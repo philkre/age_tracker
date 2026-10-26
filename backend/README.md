@@ -29,6 +29,7 @@ import matches → regroup sessions → parse up to 20 pending replays.
 - `GET /api/sessions` — feed, newest first (W/L, play time, maps, per-member ELO delta, eAPM, age-up bests)
 - `GET /api/sessions/{id}` — summary + games with all 8 players
 - `GET /api/games/{match_id}` — game incl. replay breakdowns (units, buildings, techs, actions, timeseries)
+- `GET /api/games/{match_id}/map` — terrain minimap + every positioned move/order command (heatmap), ~140 KB gzipped well
 - `POST /api/sync` — trigger sync now (admin token)
 - `GET /api/players`, `GET /api/health`
 
@@ -36,6 +37,8 @@ import matches → regroup sessions → parse up to 20 pending replays.
 
 - Times from replays (`*_s`) are **game time**; divide by `speed_factor` (1.7) for real time.
 - `rating` is pre-game; `rating + rating_diff` is post-game.
+- After changing what gets extracted from replays, re-run it on the stored zips: `uv run python -m tracker.reparse`.
+- Replays don't contain kills/deaths; the heatmap uses command positions as a proxy.
 - Replay status: `pending` → `parsed` | `unavailable` (404, expired) | `failed` (mgz broke — likely new game patch; fix vendor/mgz, then reset to `pending`).
 - macOS + Python 3.13 skips `.pth` files flagged hidden, so the editable install may not be on the path;
   `tracker/__init__.py` adds `vendor/` itself, and pytest uses `pythonpath = ["."]`.

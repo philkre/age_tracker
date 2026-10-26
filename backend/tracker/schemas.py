@@ -26,7 +26,6 @@ class MemberSummary(BaseModel):
     best_castle_s: float | None
     villagers_queued: int
     military_queued: int
-    rating_path: list[int | None]  # before game 1, then after each game
 
 
 class SessionSummary(BaseModel):
@@ -39,6 +38,8 @@ class SessionSummary(BaseModel):
     results: list[bool | None]  # per game, in order
     play_time_s: float
     durations_s: list[float]  # real-time length per game, in order
+    team_rating_path: list[float | None]  # our avg rating before game 1, then after each game
+    opp_ratings: list[float | None]  # opponents' avg rating per game
     maps: list[str]
     replays_parsed: int
     members: list[MemberSummary]
@@ -113,3 +114,14 @@ class Health(BaseModel):
 
 class Queued(BaseModel):
     queued: bool
+
+
+class GameMapOut(BaseModel):
+    dimension: int  # map tiles per side
+    scale: int  # tiles per minimap cell
+    alphabet: str
+    palette: list[str]  # cell colours; terrain chars index into this via alphabet
+    terrain: str  # one char per cell, row-major
+    starts: dict[int, list[float]]  # profile_id -> [x, y]
+    commands: dict[int, list[list[float]]]  # profile_id -> [[t_game_s, x, y, kind]], kind 0=move 1=order
+

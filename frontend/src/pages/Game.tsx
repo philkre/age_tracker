@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ApiError, gameQuery, type Game, type GamePlayer } from "../api/client";
+import { CommandHeatmap } from "../components/GameMap";
 import { axisStyle, Chart, tooltipStyle, type ChartOption } from "../components/Chart";
 import { Civ, Delta, ErrorBox, MemberDot, Spinner, Stat, TimeModeToggle } from "../components/ui";
 import { clock, date, mapImage, minuteInterval, playerColor, time } from "../lib/format";
@@ -74,6 +75,7 @@ export function GamePage({ matchId }: { matchId: number }) {
             <p className="mb-2 text-xs text-muted">Bars end at resign or game end. Hover for exact times.</p>
             <AgeTimeline g={g} players={players} />
           </section>
+          <CommandHeatmap g={g} players={players} />
           <Timeseries g={g} players={players} />
           <Production g={g} players={players} />
         </>

@@ -37,6 +37,15 @@ export const sessionsQuery = infiniteQueryOptions({
   refetchInterval: 60_000,
 });
 
+export type GameMap = components["schemas"]["GameMapOut"];
+
+export const gameMapQuery = (matchId: number) =>
+  queryOptions({
+    queryKey: ["game-map", matchId],
+    queryFn: () => get<GameMap>(`/games/${matchId}/map`),
+    staleTime: Infinity, // replay data never changes
+  });
+
 export const gameQuery = (matchId: number) =>
   queryOptions({
     queryKey: ["game", matchId],

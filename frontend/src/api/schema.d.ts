@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/games/{match_id}/map": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Game Map */
+        get: operations["get_game_map_api_games__match_id__map_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sync": {
         parameters: {
             query?: never;
@@ -110,6 +127,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** GameMapOut */
+        GameMapOut: {
+            /** Dimension */
+            dimension: number;
+            /** Scale */
+            scale: number;
+            /** Alphabet */
+            alphabet: string;
+            /** Palette */
+            palette: string[];
+            /** Terrain */
+            terrain: string;
+            /** Starts */
+            starts: {
+                [key: string]: number[];
+            };
+            /** Commands */
+            commands: {
+                [key: string]: number[][];
+            };
+        };
         /** GameOut */
         GameOut: {
             /** Match Id */
@@ -243,8 +281,6 @@ export interface components {
             villagers_queued: number;
             /** Military Queued */
             military_queued: number;
-            /** Rating Path */
-            rating_path: (number | null)[];
         };
         /** Queued */
         Queued: {
@@ -298,6 +334,10 @@ export interface components {
             play_time_s: number;
             /** Durations S */
             durations_s: number[];
+            /** Team Rating Path */
+            team_rating_path: (number | null)[];
+            /** Opp Ratings */
+            opp_ratings: (number | null)[];
             /** Maps */
             maps: string[];
             /** Replays Parsed */
@@ -344,6 +384,10 @@ export interface components {
             play_time_s: number;
             /** Durations S */
             durations_s: number[];
+            /** Team Rating Path */
+            team_rating_path: (number | null)[];
+            /** Opp Ratings */
+            opp_ratings: (number | null)[];
             /** Maps */
             maps: string[];
             /** Replays Parsed */
@@ -494,6 +538,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GameOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_game_map_api_games__match_id__map_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                match_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameMapOut"];
                 };
             };
             /** @description Validation Error */

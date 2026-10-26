@@ -52,6 +52,7 @@ class Game(Base):
     duration_game_s: Mapped[float | None] = mapped_column(Float)
 
     session: Mapped[TrainingSession | None] = relationship(back_populates="games")
+    map_data: Mapped["GameMap | None"] = relationship(cascade="all, delete-orphan", uselist=False)
     players: Mapped[list["GamePlayer"]] = relationship(
         back_populates="game", cascade="all, delete-orphan", order_by="GamePlayer.slot"
     )
@@ -103,3 +104,13 @@ class GamePlayer(Base):
         if self.rating is None or self.rating_diff is None:
             return None
         return self.rating + self.rating_diff
+
+
+class GameMap(Base):
+    """Replay minimap + positioned commands (heatmap data). Separate table: big and only read on demand."""
+
+    __tablename__ = "game_maps"
+
+    match_id: Mapped[int] = mapped_column(ForeignKey("games.match_id", ondelete="CASCADE"), primary_key=True)
+    data: Mapped[dict] = mapped_column(JSON)
+
