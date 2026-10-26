@@ -468,8 +468,8 @@ def parse_de(data, version, save, skip=False):
             data.read(8)
         if save >= 64.3:
             data.read(4)
-        if save >= 68.9:
-            de_string(data)  # new per-player string in save 68.9
+        if save >= 67.0:
+            de_string(data)  # new per-player string (seen in 67.2+, absent in 66.6)
 
         players.append(dict(
             number=number,
@@ -555,8 +555,8 @@ def parse_de(data, version, save, skip=False):
         data.read(8)
         if save >= 37:
             timestamp, x = unpack('<II', data)
-    if save >= 68.9:
-        data.read(8)  # new in 68.9 (another timestamp + 4 bytes)
+    if save >= 67.0:
+        data.read(8)  # new since 67.x (another timestamp + 4 bytes)
     rms_mod_id = None
     rms_filename = None
     for s in strings:

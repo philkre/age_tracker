@@ -32,7 +32,8 @@
 
 - PyPI `mgz` 1.8.51 (latest, Feb 2026) **fails** on current patch replays (save version **68.9**, game patch 1815). Upstream master has no fix as of 2026-10-19.
 - Root cause found: save 68.9 adds (a) an extra DE string at the end of every player record in the lobby header, (b) 8 extra bytes at the end of the DE header.
-- Fix: [`patches/mgz-save-68.9.patch`](../patches/mgz-save-68.9.patch) (4 lines). With it, full parse succeeds; older save 66.6 replays still parse.
+- Fix: [`patches/mgz-save-67.patch`](../patches/mgz-save-67.patch) (4 lines). With it, full parse succeeds; older save 66.6 replays still parse.
+- Update (Phase 2): the same two changes already exist in save 67.2 (patch 1792) and 68.0 (patch 1800); gate lowered from 68.9 to 67.0.
 - Plan: vendor/fork mgz with this patch, maybe PR upstream. Expect this to break again on future game patches → need a "parse failed" state + re-parse job.
 
 ### Available per player (verified on match 516462729)

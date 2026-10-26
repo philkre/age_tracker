@@ -12,7 +12,7 @@ Each game has per-player stats. Feed, profiles, trends and "segments"/PRs sit on
 - **Ranked team RM only**, no solo games.
 - **No uploads** — replays downloaded automatically by match id.
 - Phase 0 spike done → see [SPIKE.md](SPIKE.md). Profile ids: Cribbeltz 252396, Maverick 1308804, Sundown 2645968, johannesnagel (`johnnynagel`) 249543.
-- `mgz` needs a local patch for current replays (save 68.9) → vendor patched fork.
+- `mgz` needs a local patch for replays since save 67.x → vendored patched copy.
 - Kill/loss/score stats are not in DE replays → use production/eco/timing stats instead.
 
 ---

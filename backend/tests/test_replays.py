@@ -109,3 +109,13 @@ def test_skips_unfinished_games(db, companion_matches, tmp_path):
     called = []
     process_pending(db, _client(lambda r: called.append(1) or httpx.Response(404)), tmp_path)
     assert called == []
+
+
+def test_parses_older_save_version():
+    """Save 67.2 (game patch 1792, a 3v3) has the same header changes as 68.9."""
+    from pathlib import Path
+
+    s = extract_stats(Path(__file__).parent / "fixtures" / "replay_477543020_save67.2.zip")
+    assert len(s["players"]) == 6
+    assert all(p["eapm"] for p in s["players"].values())
+    assert 252396 in s["players"]
