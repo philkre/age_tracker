@@ -35,6 +35,8 @@ class Settings:
     challenge_sync_seconds: float = float(os.environ.get("TRACKER_CHALLENGE_SYNC_SECONDS", "90"))
     # How many history pages (100 games each) to scan per member on a sync.
     max_pages: int = int(os.environ.get("TRACKER_MAX_PAGES", "1"))
+    # Shared site password (HTTP basic auth, any username). Unset = open site.
+    site_password: str = os.environ.get("TRACKER_SITE_PASSWORD", "")
     # Required for mutating endpoints (POST /api/sync); unset disables them.
     admin_token: str = os.environ.get("TRACKER_ADMIN_TOKEN", "")
     # Built frontend (frontend/dist) to serve at /; unset = API only.

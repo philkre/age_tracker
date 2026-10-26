@@ -53,6 +53,18 @@ cd backend && uv run pytest
 | `docs/PLAN.md` | plan, decisions, roadmap |
 | `docs/SPIKE.md` | data source findings (API, replay download, parser) |
 
-## Deploying (planned)
+## Deploying
 
-One container: FastAPI serves `/api` and the built SPA (`TRACKER_STATIC_DIR=frontend/dist`), with a volume for `data/` (SQLite and replays).
+Live at https://topgun-training.fly.dev (Fly.io, Frankfurt), behind one shared password.
+
+- **One container** (`Dockerfile`): FastAPI serves `/api`, the built SPA, and runs the sync loop.
+- **Data** (SQLite and replays) is on the `tracker_data` volume at `/data`.
+- **Config** is in `fly.toml`: one always-on 512 MB machine, with a health check on `/api/health`.
+
+```bash
+fly deploy --app topgun-training --remote-only                      # ship current code
+fly secrets set --app topgun-training TRACKER_SITE_PASSWORD='…'     # change the shared password
+fly logs --app topgun-training                                      # watch sync / errors
+```
+
+The image is built on Fly's servers, so you don't need Docker locally. The password is the browser login prompt; the username can be anything.

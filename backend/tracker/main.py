@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import binascii
 import hmac
 import logging
 import time
@@ -6,7 +8,7 @@ from contextlib import asynccontextmanager
 from datetime import timezone
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
@@ -44,6 +46,37 @@ async def _sync_loop(Session: sessionmaker, settings: Settings) -> None:
         await asyncio.sleep(SYNC_TICK_S)
 
 
+OPEN_PATHS = frozenset({"/api/health"})  # Fly health checks
+
+
+def _add_site_password(app: FastAPI, settings: Settings) -> None:
+    """Whole site behind one shared password (browser basic-auth prompt, any username).
+    A valid admin bearer token also passes, so scripted POST /api/sync keeps working."""
+    password = settings.site_password.encode()
+
+    def allowed(header: str) -> bool:
+        scheme, _, value = header.partition(" ")
+        if scheme.lower() == "basic":
+            try:
+                _, _, given = base64.b64decode(value).partition(b":")
+            except (binascii.Error, ValueError):
+                return False
+            return hmac.compare_digest(given, password)
+        if scheme.lower() == "bearer" and settings.admin_token:
+            return hmac.compare_digest(value.encode(), settings.admin_token.encode())
+        return False
+
+    @app.middleware("http")
+    async def site_password(request: Request, call_next):
+        if request.url.path in OPEN_PATHS or allowed(request.headers.get("authorization", "")):
+            return await call_next(request)
+        return Response(
+            "Password required",
+            status_code=401,
+            headers={"WWW-Authenticate": 'Basic realm="TopGun Training", charset="UTF-8"'},
+        )
+
+
 def create_app(settings: Settings = default_settings, Session: sessionmaker | None = None) -> FastAPI:
     if Session is None:
         settings.data_dir.mkdir(parents=True, exist_ok=True)
@@ -60,6 +93,8 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
             task.cancel()
 
     app = FastAPI(title="AoE2 Training Tracker", lifespan=lifespan)
+    if settings.site_password:
+        _add_site_password(app, settings)
     app.add_middleware(GZipMiddleware, minimum_size=1024)  # map payloads are ~140 KB of JSON
     if settings.cors_origins:
         app.add_middleware(

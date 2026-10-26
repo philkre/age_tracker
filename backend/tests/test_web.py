@@ -1,4 +1,4 @@
-"""Website-facing behaviour: CORS, admin token, SPA serving."""
+"""Website-facing behaviour: CORS, admin token, site password, SPA serving."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -9,7 +9,8 @@ from tracker.main import create_app
 
 
 def make_client(tmp_path, **kw):
-    engine = make_engine("sqlite://")
+    # File DB: in-memory SQLite is per-connection, and the test client queries from another thread.
+    engine = make_engine(f"sqlite:///{tmp_path / 'web.db'}")
     init_db(engine)
     settings = Settings(data_dir=tmp_path, sync_enabled=False, **kw)
     return TestClient(create_app(settings, make_sessionmaker(engine)))
@@ -50,3 +51,31 @@ def test_serves_spa_with_fallback(tmp_path):
     assert "nope" not in client.get("/../secret.txt").text
     assert client.get("/api/health").json() == {"ok": True}
     assert client.get("/api/nope").status_code == 404  # unknown API path is not the SPA
+
+
+def test_site_password_protects_everything_but_health(tmp_path):
+    import base64
+
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("<div id=app></div>")
+    client = make_client(tmp_path, site_password="hunter2", static_dir=str(dist))
+
+    assert client.get("/api/health").status_code == 200  # Fly health checks
+    for path in ("/", "/sessions/1", "/api/sessions", "/api/challenge"):
+        r = client.get(path)
+        assert r.status_code == 401, path
+        assert r.headers["www-authenticate"].startswith("Basic")
+    assert client.post("/api/challenge", json={}).status_code == 401
+
+    def auth(user, pw):
+        return {"Authorization": "Basic " + base64.b64encode(f"{user}:{pw}".encode()).decode()}
+
+    assert client.get("/", headers=auth("anyone", "wrong")).status_code == 401
+    assert client.get("/", headers=auth("anyone", "hunter2")).text == "<div id=app></div>"
+    assert client.get("/api/sessions", headers=auth("maverick", "hunter2")).status_code == 200
+
+
+def test_no_site_password_means_open(tmp_path):
+    client = make_client(tmp_path)
+    assert client.get("/api/sessions").status_code == 200
