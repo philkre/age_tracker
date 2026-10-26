@@ -86,6 +86,20 @@ Opponents stored as `GamePlayer` without `player_id` → enables nemesis/rival s
 - Rivals: recurring opponents, record vs them.
 - Weekly recap (optional Discord webhook post after session closes).
 
+## 3b. Civ challenge (next feature)
+
+Goal: on training nights we try to play every civ once. Decided 2026-10-26:
+
+- **Rule:** team-wide. A civ counts as used as soon as any of the 4 of us plays it in a ranked team game. All 50 civs take about 13 games, so a challenge can span several Thursdays.
+- **Lifecycle:** started and ended from the site by anyone (no passphrase, by choice); default name "Gotta play em all!". One active challenge at a time; it auto-completes when all civs are used.
+- **Data:** `challenges` table (id, name, started_at, ended_at, completed_at). Used civs are derived from stored games with `started_at >= challenge.started_at` (member players only). Full civ list from aocref (same dataset as the terrain colours).
+- **Live:** while a challenge is active, the sync loop polls the match API every ~90 s instead of 15 min. Matches show up at game start with civs locked in, so the board marks them "in progress" before the game ends.
+- **UI:**
+  - feed banner: "Civ challenge · 23/50 used", links to the board
+  - board: grid of all civs, used ones greyed with player, date and result; filter by player and by used/available; win rate per civ
+  - "Roll civs": suggests 4 distinct unused civs, one per player (re-roll, copy to clipboard)
+- **API:** `GET /api/challenge` (active or latest, with per-civ status), `GET /api/challenges[/{id}]` (history), `POST /api/challenge` (start), `POST /api/challenge/end` (both open).
+
 ## 4. Tech stack & website architecture
 
 Goal: public, interactive website. 4 users → one deployable, cheap to host.

@@ -1,7 +1,9 @@
 import asyncio
 import hmac
 import logging
+import time
 from contextlib import asynccontextmanager
+from datetime import timezone
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query
@@ -12,21 +14,34 @@ from sqlalchemy.orm import sessionmaker
 
 from tracker.config import MEMBERS, Settings, settings as default_settings
 from tracker.db import init_db, make_engine, make_sessionmaker
-from tracker import schemas
-from tracker.models import Game, GameMap, TrainingSession
+from tracker import challenge, schemas
+from tracker.models import Challenge, Game, GameMap, TrainingSession
 from tracker.stats import game_row, session_summary
 from tracker.sync import run_sync
 
 log = logging.getLogger(__name__)
+SYNC_TICK_S = 15  # how often the loop checks whether a sync is due
+
+
+def _sync_interval_s(Session: sessionmaker, settings: Settings) -> float:
+    """Poll fast while a civ challenge runs (live board), slow otherwise."""
+    with Session() as db:
+        if challenge.active_challenge(db):
+            return settings.challenge_sync_seconds
+    return settings.sync_interval_minutes * 60
 
 
 async def _sync_loop(Session: sessionmaker, settings: Settings) -> None:
+    last = float("-inf")
     while True:
         try:
-            await asyncio.to_thread(run_sync, Session, settings)
+            interval = await asyncio.to_thread(_sync_interval_s, Session, settings)
+            if time.monotonic() - last >= interval:
+                last = time.monotonic()
+                await asyncio.to_thread(run_sync, Session, settings)
         except Exception:
             log.exception("sync failed")
-        await asyncio.sleep(settings.sync_interval_minutes * 60)
+        await asyncio.sleep(SYNC_TICK_S)
 
 
 def create_app(settings: Settings = default_settings, Session: sessionmaker | None = None) -> FastAPI:
@@ -79,8 +94,9 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
                 .limit(limit)
                 .all()
             )
+            badges = challenge.session_challenges(db, rows)
             return {
-                "items": [session_summary(s) for s in rows],
+                "items": [session_summary(s, badges.get(s.id)) for s in rows],
                 "total": db.query(TrainingSession).count(),
                 "offset": offset,
                 "limit": limit,
@@ -92,7 +108,8 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
             s = db.get(TrainingSession, session_id)
             if s is None:
                 raise HTTPException(404, "session not found")
-            return {**session_summary(s), "game_list": [game_row(g) for g in s.games]}
+            badge = challenge.session_challenges(db, [s]).get(s.id)
+            return {**session_summary(s, badge), "game_list": [game_row(g) for g in s.games]}
 
     @app.get("/api/games/{match_id}", response_model=schemas.GameOut)
     def get_game(match_id: int):
@@ -109,6 +126,47 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
             if gm is None:
                 raise HTTPException(404, "no map data (replay not parsed)")
             return gm.data
+
+    @app.get("/api/challenge", response_model=schemas.ChallengeOut | None)
+    def get_challenge():
+        """The active civ challenge, else the most recent one, else null."""
+        with Session() as db:
+            ch = challenge.latest_challenge(db)
+            return challenge.board(db, ch) if ch else None
+
+    @app.get("/api/challenges", response_model=list[schemas.ChallengeSummary])
+    def list_challenges():
+        with Session() as db:
+            return [challenge.summary(db, ch) for ch in challenge.all_challenges(db)]
+
+    @app.get("/api/challenges/{challenge_id}", response_model=schemas.ChallengeOut)
+    def get_challenge_by_id(challenge_id: int):
+        with Session() as db:
+            ch = db.get(Challenge, challenge_id)
+            if ch is None:
+                raise HTTPException(404, "challenge not found")
+            return challenge.board(db, ch)
+
+    @app.post("/api/challenge", status_code=201, response_model=schemas.ChallengeOut)
+    def start_challenge(body: schemas.ChallengeStart):
+        # Open on purpose: any of us can start/end a challenge from the site, no passphrase.
+        started = body.started_at
+        if started is not None and started.tzinfo is not None:
+            started = started.astimezone(timezone.utc).replace(tzinfo=None)
+        with Session() as db:
+            try:
+                ch = challenge.start_challenge(db, body.name.strip() or challenge.DEFAULT_NAME, started)
+            except ValueError as e:
+                raise HTTPException(409, str(e))
+            return challenge.board(db, ch)
+
+    @app.post("/api/challenge/end", response_model=schemas.ChallengeOut)
+    def end_challenge():
+        with Session() as db:
+            ch = challenge.end_challenge(db)
+            if ch is None:
+                raise HTTPException(404, "no active challenge")
+            return challenge.board(db, ch)
 
     @app.post("/api/sync", status_code=202, response_model=schemas.Queued)
     def trigger_sync(background: BackgroundTasks, authorization: str | None = Header(default=None)):

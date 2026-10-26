@@ -28,6 +28,21 @@ class MemberSummary(BaseModel):
     military_queued: int
 
 
+class SessionChallengeCiv(BaseModel):
+    civ: str
+    name: str
+    profile_id: int
+    player: str
+
+
+class SessionChallenge(BaseModel):
+    """The civ challenge a session belongs to and the civs it ticked off."""
+
+    id: int
+    name: str
+    new_civs: list[SessionChallengeCiv]
+
+
 class SessionSummary(BaseModel):
     id: int
     started_at: datetime
@@ -46,6 +61,7 @@ class SessionSummary(BaseModel):
     maps: list[str]
     replays_parsed: int
     members: list[MemberSummary]
+    challenge: SessionChallenge | None = None
 
 
 class ReplayStats(BaseModel):
@@ -127,4 +143,51 @@ class GameMapOut(BaseModel):
     terrain: str  # one char per cell, row-major
     starts: dict[int, list[float]]  # profile_id -> [x, y]
     commands: dict[int, list[list[float]]]  # profile_id -> [[t_game_s, x, y, kind]], kind 0=move 1=order
+
+
+class ChallengeCiv(BaseModel):
+    civ: str  # slug, e.g. "mayans"
+    name: str
+    used: bool
+    plays: int  # games we played it in during the challenge (>1 = repeat)
+    # first use (absent while unused)
+    profile_id: int | None = None
+    player: str | None = None
+    match_id: int | None = None
+    session_id: int | None = None
+    started_at: datetime | None = None
+    won: bool | None = None
+    in_progress: bool = False
+
+
+class ChallengeMember(BaseModel):
+    profile_id: int
+    name: str
+    civs_used: int  # civs this member ticked off first
+    wins: int
+
+
+class ChallengeSummary(BaseModel):
+    id: int
+    name: str
+    started_at: datetime
+    ended_at: datetime | None
+    completed_at: datetime | None
+    active: bool
+    total: int
+    used: int
+    repeats: int
+    games: int
+    wins: int
+    losses: int
+
+
+class ChallengeOut(ChallengeSummary):
+    civs: list[ChallengeCiv]
+    members: list[ChallengeMember]
+
+
+class ChallengeStart(BaseModel):
+    name: str = "Gotta play em all!"
+    started_at: datetime | None = None  # default now; earlier to count games already played
 

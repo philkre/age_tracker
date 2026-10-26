@@ -5,6 +5,7 @@
       "name": "backend",
       "runtimeExecutable": "uv",
       "runtimeArgs": ["run", "--directory", "backend", "uvicorn", "tracker.main:create_app", "--factory", "--port", "8000"],
+      "env": { "TRACKER_ADMIN_TOKEN": "dev" },
       "port": 8000
     },
     {

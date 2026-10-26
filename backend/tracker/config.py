@@ -31,6 +31,8 @@ class Settings:
     session_gap_hours: float = float(os.environ.get("TRACKER_SESSION_GAP_HOURS", "3"))
     sync_enabled: bool = os.environ.get("TRACKER_SYNC_ENABLED", "1") == "1"
     sync_interval_minutes: float = float(os.environ.get("TRACKER_SYNC_INTERVAL_MINUTES", "15"))
+    # While a civ challenge is active, sync this often so the board is live during games.
+    challenge_sync_seconds: float = float(os.environ.get("TRACKER_CHALLENGE_SYNC_SECONDS", "90"))
     # How many history pages (100 games each) to scan per member on a sync.
     max_pages: int = int(os.environ.get("TRACKER_MAX_PAGES", "1"))
     # Required for mutating endpoints (POST /api/sync); unset disables them.

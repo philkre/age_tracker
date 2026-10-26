@@ -106,6 +106,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/challenge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Challenge
+         * @description The active civ challenge, else the most recent one, else null.
+         */
+        get: operations["get_challenge_api_challenge_get"];
+        put?: never;
+        /** Start Challenge */
+        post: operations["start_challenge_api_challenge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/challenges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Challenges */
+        get: operations["list_challenges_api_challenges_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/challenges/{challenge_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Challenge By Id */
+        get: operations["get_challenge_by_id_api_challenges__challenge_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/challenge/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End Challenge */
+        post: operations["end_challenge_api_challenge_end_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sync": {
         parameters: {
             query?: never;
@@ -127,6 +199,119 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ChallengeCiv */
+        ChallengeCiv: {
+            /** Civ */
+            civ: string;
+            /** Name */
+            name: string;
+            /** Used */
+            used: boolean;
+            /** Plays */
+            plays: number;
+            /** Profile Id */
+            profile_id?: number | null;
+            /** Player */
+            player?: string | null;
+            /** Match Id */
+            match_id?: number | null;
+            /** Session Id */
+            session_id?: number | null;
+            /** Started At */
+            started_at?: string | null;
+            /** Won */
+            won?: boolean | null;
+            /**
+             * In Progress
+             * @default false
+             */
+            in_progress: boolean;
+        };
+        /** ChallengeMember */
+        ChallengeMember: {
+            /** Profile Id */
+            profile_id: number;
+            /** Name */
+            name: string;
+            /** Civs Used */
+            civs_used: number;
+            /** Wins */
+            wins: number;
+        };
+        /** ChallengeOut */
+        ChallengeOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Active */
+            active: boolean;
+            /** Total */
+            total: number;
+            /** Used */
+            used: number;
+            /** Repeats */
+            repeats: number;
+            /** Games */
+            games: number;
+            /** Wins */
+            wins: number;
+            /** Losses */
+            losses: number;
+            /** Civs */
+            civs: components["schemas"]["ChallengeCiv"][];
+            /** Members */
+            members: components["schemas"]["ChallengeMember"][];
+        };
+        /** ChallengeStart */
+        ChallengeStart: {
+            /**
+             * Name
+             * @default Gotta play em all!
+             */
+            name: string;
+            /** Started At */
+            started_at?: string | null;
+        };
+        /** ChallengeSummary */
+        ChallengeSummary: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Ended At */
+            ended_at: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Active */
+            active: boolean;
+            /** Total */
+            total: number;
+            /** Used */
+            used: number;
+            /** Repeats */
+            repeats: number;
+            /** Games */
+            games: number;
+            /** Wins */
+            wins: number;
+            /** Losses */
+            losses: number;
+        };
         /** GameMapOut */
         GameMapOut: {
             /** Dimension */
@@ -308,6 +493,29 @@ export interface components {
             /** Timeseries */
             timeseries: number[][];
         };
+        /**
+         * SessionChallenge
+         * @description The civ challenge a session belongs to and the civs it ticked off.
+         */
+        SessionChallenge: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** New Civs */
+            new_civs: components["schemas"]["SessionChallengeCiv"][];
+        };
+        /** SessionChallengeCiv */
+        SessionChallengeCiv: {
+            /** Civ */
+            civ: string;
+            /** Name */
+            name: string;
+            /** Profile Id */
+            profile_id: number;
+            /** Player */
+            player: string;
+        };
         /** SessionDetail */
         SessionDetail: {
             /** Id */
@@ -350,6 +558,7 @@ export interface components {
             replays_parsed: number;
             /** Members */
             members: components["schemas"]["MemberSummary"][];
+            challenge?: components["schemas"]["SessionChallenge"] | null;
             /** Game List */
             game_list: components["schemas"]["GameOut"][];
         };
@@ -406,6 +615,7 @@ export interface components {
             replays_parsed: number;
             /** Members */
             members: components["schemas"]["MemberSummary"][];
+            challenge?: components["schemas"]["SessionChallenge"] | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -590,6 +800,130 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_challenge_api_challenge_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChallengeOut"] | null;
+                };
+            };
+        };
+    };
+    start_challenge_api_challenge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChallengeStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChallengeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_challenges_api_challenges_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChallengeSummary"][];
+                };
+            };
+        };
+    };
+    get_challenge_by_id_api_challenges__challenge_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                challenge_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChallengeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    end_challenge_api_challenge_end_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChallengeOut"];
                 };
             };
         };

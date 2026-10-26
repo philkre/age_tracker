@@ -19,6 +19,7 @@ import matches → regroup sessions → parse up to 20 pending replays.
 | `TRACKER_SESSION_GAP_HOURS` | `3` | new session after this gap between games |
 | `TRACKER_SYNC_ENABLED` | `1` | |
 | `TRACKER_SYNC_INTERVAL_MINUTES` | `15` | |
+| `TRACKER_CHALLENGE_SYNC_SECONDS` | `90` | sync interval while a civ challenge is active (live board) |
 | `TRACKER_MAX_PAGES` | `1` | history pages (100 games) per member per sync; raise once for backfill |
 | `TRACKER_ADMIN_TOKEN` | — | `Authorization: Bearer <token>` for `POST /api/sync`; unset = disabled |
 | `TRACKER_STATIC_DIR` | — | built frontend (`frontend/dist`) served at `/` with SPA fallback |
@@ -31,6 +32,9 @@ import matches → regroup sessions → parse up to 20 pending replays.
 - `GET /api/games/{match_id}` — game incl. replay breakdowns (units, buildings, techs, actions, timeseries)
 - `GET /api/games/{match_id}/map` — terrain minimap + every positioned move/order command (heatmap), ~140 KB gzipped well
 - `POST /api/sync` — trigger sync now (admin token)
+- `GET /api/challenge` — active civ challenge (else the latest one, else `null`) with per-civ status
+- `GET /api/challenges`, `GET /api/challenges/{id}` — challenge history / one challenge
+- `POST /api/challenge` `{name?, started_at?}` / `POST /api/challenge/end` — start/end a civ challenge (open, no token; default name "Gotta play em all!")
 - `GET /api/players`, `GET /api/health`
 
 ## Notes

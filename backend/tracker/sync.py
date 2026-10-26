@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker
 
 from tracker import companion, replays
 from tracker.config import Settings
+from tracker.challenge import complete_if_done
 from tracker.grouping import group_sessions
 from tracker.importer import sync_from_api
 
@@ -31,6 +32,7 @@ def run_sync(
         with Session() as db:
             new = sync_from_api(db, companion_client, max_pages=settings.max_pages)
             group_sessions(db, gap=timedelta(hours=settings.session_gap_hours))
+            complete_if_done(db)
             parsed = replays.process_pending(db, replay_client, settings.replay_dir)
         log.info("sync: %d new games, %d replays parsed", len(new), len(parsed))
         return {"new_games": new, "replays_parsed": parsed}

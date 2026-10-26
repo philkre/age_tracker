@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
 import { ApiError, sessionQuery, type Game, type GamePlayer, type MemberSummary, type SessionDetail } from "../api/client";
+import { ChallengeBadge, ChallengeCivsSection } from "../components/ChallengeBadge";
 import { Chart, type ChartOption } from "../components/Chart";
 import { Civ, Delta, ErrorBox, MemberDot, ResultStrip, Spinner, Stat, TimeModeToggle } from "../components/ui";
 import { clock, date, hours, mapImage, pct, sessionTitle, time } from "../lib/format";
@@ -31,6 +32,7 @@ export function SessionPage({ sessionId }: { sessionId: number }) {
             <p className="tabular text-muted">
               {date(s.started_at)} · {time(s.started_at)}–{time(s.ended_at)}
             </p>
+            {s.challenge && <ChallengeBadge c={s.challenge} className="mt-2" />}
           </div>
           <TimeModeToggle />
         </div>
@@ -43,6 +45,8 @@ export function SessionPage({ sessionId }: { sessionId: number }) {
         <Stat label="Avg game" value={clock(avgGame)} sub="real time" />
         <Stat label="Replays" value={`${s.replays_parsed}/${s.games}`} sub="analysed" />
       </section>
+
+      {s.challenge && <ChallengeCivsSection c={s.challenge} />}
 
       <section className="rounded-xl border border-line bg-surface p-4 sm:p-5">
         <h2 className="mb-2 font-semibold">ELO over the session</h2>

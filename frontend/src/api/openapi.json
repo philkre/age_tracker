@@ -215,6 +215,148 @@
         }
       }
     },
+    "/api/challenge": {
+      "get": {
+        "summary": "Get Challenge",
+        "description": "The active civ challenge, else the most recent one, else null.",
+        "operationId": "get_challenge_api_challenge_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ChallengeOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Get Challenge Api Challenge Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Start Challenge",
+        "operationId": "start_challenge_api_challenge_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChallengeStart"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/challenges": {
+      "get": {
+        "summary": "List Challenges",
+        "operationId": "list_challenges_api_challenges_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChallengeSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Challenges Api Challenges Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/challenges/{challenge_id}": {
+      "get": {
+        "summary": "Get Challenge By Id",
+        "operationId": "get_challenge_by_id_api_challenges__challenge_id__get",
+        "parameters": [
+          {
+            "name": "challenge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Challenge Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/challenge/end": {
+      "post": {
+        "summary": "End Challenge",
+        "operationId": "end_challenge_api_challenge_end_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/sync": {
       "post": {
         "summary": "Trigger Sync",
@@ -264,6 +406,343 @@
   },
   "components": {
     "schemas": {
+      "ChallengeCiv": {
+        "properties": {
+          "civ": {
+            "type": "string",
+            "title": "Civ"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "used": {
+            "type": "boolean",
+            "title": "Used"
+          },
+          "plays": {
+            "type": "integer",
+            "title": "Plays"
+          },
+          "profile_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Id"
+          },
+          "player": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Player"
+          },
+          "match_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Id"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "won": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Won"
+          },
+          "in_progress": {
+            "type": "boolean",
+            "title": "In Progress",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "civ",
+          "name",
+          "used",
+          "plays"
+        ],
+        "title": "ChallengeCiv"
+      },
+      "ChallengeMember": {
+        "properties": {
+          "profile_id": {
+            "type": "integer",
+            "title": "Profile Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "civs_used": {
+            "type": "integer",
+            "title": "Civs Used"
+          },
+          "wins": {
+            "type": "integer",
+            "title": "Wins"
+          }
+        },
+        "type": "object",
+        "required": [
+          "profile_id",
+          "name",
+          "civs_used",
+          "wins"
+        ],
+        "title": "ChallengeMember"
+      },
+      "ChallengeOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "used": {
+            "type": "integer",
+            "title": "Used"
+          },
+          "repeats": {
+            "type": "integer",
+            "title": "Repeats"
+          },
+          "games": {
+            "type": "integer",
+            "title": "Games"
+          },
+          "wins": {
+            "type": "integer",
+            "title": "Wins"
+          },
+          "losses": {
+            "type": "integer",
+            "title": "Losses"
+          },
+          "civs": {
+            "items": {
+              "$ref": "#/components/schemas/ChallengeCiv"
+            },
+            "type": "array",
+            "title": "Civs"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/ChallengeMember"
+            },
+            "type": "array",
+            "title": "Members"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "started_at",
+          "ended_at",
+          "completed_at",
+          "active",
+          "total",
+          "used",
+          "repeats",
+          "games",
+          "wins",
+          "losses",
+          "civs",
+          "members"
+        ],
+        "title": "ChallengeOut"
+      },
+      "ChallengeStart": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": "Gotta play em all!"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "type": "object",
+        "title": "ChallengeStart"
+      },
+      "ChallengeSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "used": {
+            "type": "integer",
+            "title": "Used"
+          },
+          "repeats": {
+            "type": "integer",
+            "title": "Repeats"
+          },
+          "games": {
+            "type": "integer",
+            "title": "Games"
+          },
+          "wins": {
+            "type": "integer",
+            "title": "Wins"
+          },
+          "losses": {
+            "type": "integer",
+            "title": "Losses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "started_at",
+          "ended_at",
+          "completed_at",
+          "active",
+          "total",
+          "used",
+          "repeats",
+          "games",
+          "wins",
+          "losses"
+        ],
+        "title": "ChallengeSummary"
+      },
       "GameMapOut": {
         "properties": {
           "dimension": {
@@ -953,6 +1432,61 @@
         ],
         "title": "ReplayStats"
       },
+      "SessionChallenge": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "new_civs": {
+            "items": {
+              "$ref": "#/components/schemas/SessionChallengeCiv"
+            },
+            "type": "array",
+            "title": "New Civs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "new_civs"
+        ],
+        "title": "SessionChallenge",
+        "description": "The civ challenge a session belongs to and the civs it ticked off."
+      },
+      "SessionChallengeCiv": {
+        "properties": {
+          "civ": {
+            "type": "string",
+            "title": "Civ"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "profile_id": {
+            "type": "integer",
+            "title": "Profile Id"
+          },
+          "player": {
+            "type": "string",
+            "title": "Player"
+          }
+        },
+        "type": "object",
+        "required": [
+          "civ",
+          "name",
+          "profile_id",
+          "player"
+        ],
+        "title": "SessionChallengeCiv"
+      },
       "SessionDetail": {
         "properties": {
           "id": {
@@ -1072,6 +1606,16 @@
             },
             "type": "array",
             "title": "Members"
+          },
+          "challenge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionChallenge"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "game_list": {
             "items": {
@@ -1254,6 +1798,16 @@
             },
             "type": "array",
             "title": "Members"
+          },
+          "challenge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SessionChallenge"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

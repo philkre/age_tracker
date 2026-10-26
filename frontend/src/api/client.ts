@@ -58,3 +58,42 @@ export const sessionQuery = (id: number) =>
     queryFn: () => get<SessionDetail>(`/sessions/${id}`),
     refetchInterval: 60_000,
   });
+
+export type Challenge = components["schemas"]["ChallengeOut"];
+export type ChallengeCiv = components["schemas"]["ChallengeCiv"];
+
+export const challengeQuery = queryOptions({
+  queryKey: ["challenge"],
+  queryFn: () => get<Challenge | null>("/challenge"),
+  // Live during a challenge (backend syncs every ~90s then).
+  refetchInterval: (q) => (q.state.data?.active ? 30_000 : false),
+});
+
+export type ChallengeSummary = components["schemas"]["ChallengeSummary"];
+export type SessionChallenge = components["schemas"]["SessionChallenge"];
+
+export const challengesQuery = queryOptions({
+  queryKey: ["challenges"],
+  queryFn: () => get<ChallengeSummary[]>("/challenges"),
+});
+
+export const challengeByIdQuery = (id: number) =>
+  queryOptions({
+    queryKey: ["challenge", id],
+    queryFn: () => get<Challenge>(`/challenges/${id}`),
+    refetchInterval: (q) => (q.state.data?.active ? 30_000 : false),
+  });
+
+/** POST JSON to the API. Throws ApiError with the server's detail message. */
+export async function post<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`/api${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const detail = await res.json().then((j) => j.detail as string, () => res.statusText);
+    throw new ApiError(res.status, detail);
+  }
+  return res.json() as Promise<T>;
+}

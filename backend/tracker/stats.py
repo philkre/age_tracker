@@ -63,7 +63,7 @@ def member_summary(games: list[Game]) -> list[dict]:
     return out
 
 
-def session_summary(s: TrainingSession) -> dict:
+def session_summary(s: TrainingSession, challenge: dict | None = None) -> dict:
     games = s.games
     finished = [g for g in games if g.won is not None]
     return {
@@ -84,6 +84,7 @@ def session_summary(s: TrainingSession) -> dict:
         "maps": sorted({g.map_name for g in games}),
         "replays_parsed": sum(1 for g in games if g.replay_status == "parsed"),
         "members": member_summary(games),
+        "challenge": challenge,
     }
 
 

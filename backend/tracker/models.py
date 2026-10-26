@@ -114,3 +114,15 @@ class GameMap(Base):
     match_id: Mapped[int] = mapped_column(ForeignKey("games.match_id", ondelete="CASCADE"), primary_key=True)
     data: Mapped[dict] = mapped_column(JSON)
 
+
+class Challenge(Base):
+    """Civ challenge: play every ranked civ once as a team. Games are matched by time, not stored here."""
+
+    __tablename__ = "challenges"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(128))
+    started_at: Mapped[datetime] = mapped_column(DateTime)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime)  # ended by hand
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)  # all civs played
+

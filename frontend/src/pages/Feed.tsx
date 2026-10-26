@@ -5,6 +5,8 @@ import { sessionsQuery, type SessionSummary } from "../api/client";
 import { clock, date, hours, pct, sessionTitle, time } from "../lib/format";
 import { memberColor } from "../lib/members";
 import { useTimeMode } from "../lib/timeMode";
+import { ChallengeBadge } from "../components/ChallengeBadge";
+import { ChallengeBanner } from "../components/ChallengeBanner";
 import { defaultGame, SessionMap, SessionMapNav } from "../components/SessionMap";
 import { SessionSplits } from "../components/SessionSplits";
 import { Delta, ErrorBox, MemberDot, Spinner, Stat } from "../components/ui";
@@ -32,6 +34,7 @@ export function Feed() {
 
   return (
     <div className="space-y-4">
+      <ChallengeBanner />
       <div className="flex items-baseline justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Sessions</h1>
         <span className="text-sm text-muted">{total} total</span>
@@ -69,7 +72,7 @@ function SessionCard({ s }: { s: SessionSummary }) {
   // md+: everything on the left, map spanning the right. Mobile: header + stats beside the map,
   // tiles and members full width below.
   return (
-    <article className="relative grid grid-cols-[minmax(0,1fr)_8rem] gap-x-4 gap-y-4 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-faint hover:bg-surface-2 sm:grid-cols-[minmax(0,1fr)_12rem] sm:p-5 md:grid-cols-[minmax(0,1fr)_13rem] md:gap-x-6">
+    <article className="relative isolate grid grid-cols-[minmax(0,1fr)_8rem] gap-x-4 gap-y-4 rounded-xl border border-line bg-surface p-4 transition-colors hover:border-faint hover:bg-surface-2 sm:grid-cols-[minmax(0,1fr)_12rem] sm:p-5 md:grid-cols-[minmax(0,1fr)_13rem] md:gap-x-6">
       <div className="min-w-0">
         <h2 className="line-clamp-2 text-lg leading-snug font-semibold sm:truncate">
           <Link
@@ -86,6 +89,7 @@ function SessionCard({ s }: { s: SessionSummary }) {
         <p className="mt-0.5 truncate text-xs text-faint" title={s.maps.join(", ")}>
           {s.maps.join(" · ")}
         </p>
+        {s.challenge && <ChallengeBadge c={s.challenge} className="relative z-10 mt-2" />}
 
         <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="Record" value={`${s.wins}–${s.losses}`} sub={`${pct(s.wins, s.wins + s.losses)} wins`} />
