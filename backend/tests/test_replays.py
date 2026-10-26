@@ -39,6 +39,12 @@ def test_extract_player_stats(stats):
     assert "Fletching" in techs and "Feudal Age" not in techs
     assert len(techs) == len(set(techs))
     assert len(crib["replay_stats"]["timeseries"]) > 100
+    queues = crib["replay_stats"]["queues"]
+    assert [t for t, _, _ in queues] == sorted(t for t, _, _ in queues)
+    queued = {}
+    for _, unit, n in queues:
+        queued[unit] = queued.get(unit, 0) + n
+    assert queued == crib["replay_stats"]["units"]  # the timeline adds up to the totals
 
     loser = stats["players"][20382218]  # President of USA resigned first
     assert 1723 < loser["resign_s"] < 1725

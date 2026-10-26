@@ -516,6 +516,15 @@ export interface components {
             };
             /** Timeseries */
             timeseries: number[][];
+            /**
+             * Queues
+             * @default []
+             */
+            queues: [
+                number,
+                string,
+                number
+            ][];
         };
         /**
          * SessionChallenge

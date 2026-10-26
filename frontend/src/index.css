@@ -18,6 +18,15 @@
   --color-win: #3ecf8e;
   --color-loss: #f2676a;
 
+  /* Categorical series (dataviz reference palette, dark steps), in fixed order. */
+  --color-series-1: #3987e5;
+  --color-series-2: #d95926;
+  --color-series-3: #199e70;
+  --color-series-4: #c98500;
+  --color-series-5: #d55181;
+  --color-series-6: #008300;
+  --color-series-7: #9085e9;
+
   --radius-lg: 0.625rem;
   --radius-xl: 0.875rem;
 }
@@ -36,6 +45,13 @@
     --color-accent: #17171a;
     --color-win: #1a9e64;
     --color-loss: #dc4b4e;
+    --color-series-1: #2a78d6;
+    --color-series-2: #eb6834;
+    --color-series-3: #1baf7a;
+    --color-series-4: #eda100;
+    --color-series-5: #e87ba4;
+    --color-series-6: #008300;
+    --color-series-7: #6250d6;
   }
 }
 

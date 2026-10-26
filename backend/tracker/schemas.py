@@ -70,6 +70,8 @@ class ReplayStats(BaseModel):
     techs: list[dict]
     actions: dict[str, int]
     timeseries: list[list[float]]
+    # Every queue command in order: [game seconds, unit name, amount]. Missing before the reparse.
+    queues: list[tuple[float, str, int]] = []
 
 
 class GamePlayerOut(BaseModel):

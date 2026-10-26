@@ -256,9 +256,33 @@ function AgeTimeline({ g, players }: { g: Game; players: GamePlayer[] }) {
   return <Chart option={option} className="h-80 w-full" />;
 }
 
+// Economy units (matches the backend's ECO_UNITS); everything else queued counts as army.
+const ECO_UNITS = new Set(["Villager", "Fishing Ship", "Trade Cart", "Trade Cog", "Transport Ship"]);
+const ARMY_SLOTS = 7; // categorical colours; further unit types fold into "Other"
+const GRID_S = 15; // composition chart sampling step, game seconds
+
+type Queue = [number, string, number];
+const queuesOf = (p: GamePlayer) => (p.replay_stats?.queues ?? []) as Queue[];
+
+/** Running total of queued units as step points from 0 to the end of the game (game seconds). */
+function cumulative(queues: Queue[], keep: (unit: string) => boolean, end: number): [number, number][] {
+  let n = 0;
+  const pts: [number, number][] = [[0, 0]];
+  for (const [t, unit, amount] of queues) {
+    if (!keep(unit)) continue;
+    n += amount;
+    pts.push([t, n]);
+  }
+  pts.push([end, n]);
+  return pts;
+}
+
+type Metric = "vils" | "army" | 1 | 2;
+
 function Timeseries({ g, players }: { g: Game; players: GamePlayer[] }) {
   const { convert } = useTimeMode();
-  const [metric, setMetric] = useState<1 | 2>(1);
+  const [metric, setMetric] = useState<Metric>("vils");
+  const queued = metric === "vils" || metric === "army";
   const option = useMemo<ChartOption>(
     () => ({
       grid: { left: 8, right: 16, top: 56, bottom: 64, containLabel: true },
@@ -286,7 +310,7 @@ function Timeseries({ g, players }: { g: Game; players: GamePlayer[] }) {
           height: 20,
           bottom: 12,
           borderColor: "var(--color-line)",
-          fillerColor: "rgba(224,164,58,0.15)",
+          fillerColor: "rgba(128,128,128,0.15)",
           textStyle: { color: "var(--color-muted)" },
           labelFormatter: (v: number) => clock(v),
         },
@@ -299,10 +323,17 @@ function Timeseries({ g, players }: { g: Game; players: GamePlayer[] }) {
         lineStyle: { width: p.is_member ? 2.5 : 1.5, type: p.team === g.our_team ? "solid" : "dashed" },
         itemStyle: { color: playerColor(p.color) },
         emphasis: { focus: "series" },
-        data: (p.replay_stats?.timeseries ?? []).map((row) => [convert(row[0], g.speed_factor), row[metric]]),
+        step: queued ? "end" : false,
+        data: queued
+          ? cumulative(
+              queuesOf(p),
+              metric === "vils" ? (u) => u === "Villager" : (u) => !ECO_UNITS.has(u),
+              g.duration_game_s ?? 0,
+            ).map(([t, n]) => [convert(t, g.speed_factor), n])
+          : (p.replay_stats?.timeseries ?? []).map((row) => [convert(row[0], g.speed_factor), row[metric]]),
       })),
     }),
-    [g, players, metric, convert],
+    [g, players, metric, queued, convert],
   );
 
   return (
@@ -315,6 +346,8 @@ function Timeseries({ g, players }: { g: Game; players: GamePlayer[] }) {
         <div className="flex gap-1" role="tablist">
           {(
             [
+              ["vils", "Villagers"],
+              ["army", "Army"],
               [1, "Resources banked"],
               [2, "Object count"],
             ] as const
@@ -335,8 +368,9 @@ function Timeseries({ g, players }: { g: Game; players: GamePlayer[] }) {
       </div>
       <Chart option={option} className="h-80 w-full sm:h-96" />
       <p className="mt-1 text-xs text-faint">
-        Approximate values from the replay sync stream: banked = unspent wood+food+gold+stone; objects include units,
-        buildings and short-lived effects.
+        {queued
+          ? "Units queued so far, from the replay's commands. Cancelled units still count, and losses aren't in the replay, so this is production, not units alive."
+          : "Approximate values from the replay sync stream: banked = unspent wood+food+gold+stone; objects include units, buildings and short-lived effects."}
       </p>
     </section>
   );
@@ -352,6 +386,13 @@ function Production({ g, players }: { g: Game; players: GamePlayer[] }) {
   const techs = (stats?.techs ?? []) as unknown as Tech[];
   const maxUnits = Math.max(1, ...units.map(([, n]) => n));
   const maxBuildings = Math.max(1, ...buildings.map(([, n]) => n));
+  // Rank army unit types across the whole game, so a unit keeps its colour when switching players.
+  const armyTypes = useMemo(() => {
+    const total = new Map<string, number>();
+    for (const x of players)
+      for (const [, unit, n] of queuesOf(x)) if (!ECO_UNITS.has(unit)) total.set(unit, (total.get(unit) ?? 0) + n);
+    return [...total].sort((a, b) => b[1] - a[1]).map(([unit]) => unit);
+  }, [players]);
 
   return (
     <section className="rounded-xl border border-line bg-surface">
@@ -374,6 +415,7 @@ function Production({ g, players }: { g: Game; players: GamePlayer[] }) {
           ))}
         </div>
       </div>
+      <ArmyComposition g={g} p={p} armyTypes={armyTypes} />
       <div className="grid gap-6 p-4 md:grid-cols-3">
         <BarList title="Units queued" rows={units} max={maxUnits} color={playerColor(p.color)} />
         <BarList title="Buildings placed" rows={buildings} max={maxBuildings} color={playerColor(p.color)} />
@@ -394,6 +436,73 @@ function Production({ g, players }: { g: Game; players: GamePlayer[] }) {
         </div>
       </div>
     </section>
+  );
+}
+
+function ArmyComposition({ g, p, armyTypes }: { g: Game; p: GamePlayer; armyTypes: string[] }) {
+  const { convert } = useTimeMode();
+  const option = useMemo<ChartOption | null>(() => {
+    const army = queuesOf(p).filter(([, unit]) => !ECO_UNITS.has(unit));
+    if (army.length === 0) return null;
+    const slot = (unit: string) => {
+      const i = armyTypes.indexOf(unit);
+      return i >= 0 && i < ARMY_SLOTS ? unit : "Other";
+    };
+    const groups = [...armyTypes.slice(0, ARMY_SLOTS), "Other"].filter((k) => army.some(([, u]) => slot(u) === k));
+    // Shared time grid so the stack lines up across series.
+    const end = g.duration_game_s ?? army[army.length - 1][0];
+    const grid: number[] = [];
+    for (let t = 0; t < end; t += GRID_S) grid.push(t);
+    grid.push(end);
+    const series = groups.map((k) => {
+      let i = 0;
+      let n = 0;
+      const data = grid.map((t) => {
+        while (i < army.length && army[i][0] <= t) {
+          if (slot(army[i][1]) === k) n += army[i][2];
+          i++;
+        }
+        return [convert(t, g.speed_factor), n];
+      });
+      return {
+        name: k,
+        type: "line",
+        stack: "army",
+        showSymbol: false,
+        areaStyle: { opacity: 0.9 },
+        lineStyle: { width: 1, color: "var(--color-surface)" },
+        itemStyle: { color: k === "Other" ? "var(--color-faint)" : `var(--color-series-${armyTypes.indexOf(k) + 1})` },
+        emphasis: { focus: "series" },
+        data,
+      };
+    });
+    return {
+      grid: { left: 8, right: 16, top: 40, bottom: 8, containLabel: true },
+      legend: { top: 0, type: "scroll", textStyle: { color: "var(--color-muted)" }, icon: "roundRect", itemWidth: 10, itemHeight: 10 },
+      xAxis: {
+        type: "value",
+        ...axisStyle,
+        splitLine: { show: false },
+        interval: minuteInterval(convert(end, g.speed_factor) ?? 0),
+        axisLabel: { ...axisStyle.axisLabel, formatter: (v: number) => clock(v), hideOverlap: true },
+        max: "dataMax",
+      },
+      yAxis: { type: "value", minInterval: 1, ...axisStyle },
+      tooltip: {
+        ...tooltipStyle,
+        trigger: "axis",
+        valueFormatter: (v: number) => String(Math.round(v)),
+        axisPointer: { label: { formatter: (q: { value: number }) => clock(q.value) } },
+      },
+      series,
+    };
+  }, [g, p, armyTypes, convert]);
+
+  return (
+    <div className="border-b border-line p-4">
+      <h3 className="mb-1 text-xs font-medium text-muted">Army composition (units queued so far)</h3>
+      {option ? <Chart option={option} className="h-64 w-full" /> : <p className="text-sm text-faint">No army queued.</p>}
+    </div>
   );
 }
 

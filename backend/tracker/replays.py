@@ -76,6 +76,7 @@ def extract_stats(path: Path) -> dict:
             "_buildings": Counter(),
             "_techs": {},
             "_actions": Counter(),
+            "_queues": [],
             "_timeseries": [
                 [r.timestamp.total_seconds(), r.total_resources, r.total_objects] for r in p.timeseries
             ],
@@ -98,7 +99,9 @@ def extract_stats(path: Path) -> dict:
         if kind == "DE_QUEUE":
             unit = a.payload.get("unit")
             if unit:
-                s["_units"][unit] += a.payload.get("amount") or 1
+                amount = a.payload.get("amount") or 1
+                s["_units"][unit] += amount
+                s["_queues"].append([round(t, 1), unit, amount])
                 if unit not in ECO_UNITS and s["first_military_s"] is None:
                     s["first_military_s"] = t
         elif kind == "BUILD":
@@ -125,6 +128,7 @@ def extract_stats(path: Path) -> dict:
             "techs": [{"name": n, "t": t} for n, t in techs.items()],
             "actions": dict(s.pop("_actions").most_common()),
             "timeseries": s.pop("_timeseries"),
+            "queues": s.pop("_queues"),
         }
         players[p.profile_id] = s
 

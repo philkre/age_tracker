@@ -1463,6 +1463,27 @@
             },
             "type": "array",
             "title": "Timeseries"
+          },
+          "queues": {
+            "items": {
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array",
+              "maxItems": 3,
+              "minItems": 3
+            },
+            "type": "array",
+            "title": "Queues",
+            "default": []
           }
         },
         "type": "object",
