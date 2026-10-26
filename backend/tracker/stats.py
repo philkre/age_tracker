@@ -1,9 +1,15 @@
 """Read-side aggregation for sessions (small data -> computed on the fly)."""
 
+from datetime import datetime, timezone
 from statistics import mean
 
 from tracker.config import MEMBERS
 from tracker.models import Game, GamePlayer, TrainingSession
+
+
+def _utc(dt: datetime | None) -> datetime | None:
+    """DB stores naive UTC; make it explicit so clients convert to local time."""
+    return dt.replace(tzinfo=timezone.utc) if dt else None
 
 
 def _avg(values):
@@ -50,11 +56,12 @@ def session_summary(s: TrainingSession) -> dict:
     finished = [g for g in games if g.won is not None]
     return {
         "id": s.id,
-        "started_at": s.started_at,
-        "ended_at": s.ended_at,
+        "started_at": _utc(s.started_at),
+        "ended_at": _utc(s.ended_at),
         "games": len(games),
         "wins": sum(1 for g in finished if g.won),
         "losses": sum(1 for g in finished if not g.won),
+        "results": [g.won for g in games],
         "play_time_s": sum(g.duration_real_s or 0 for g in games),
         "maps": sorted({g.map_name for g in games}),
         "replays_parsed": sum(1 for g in games if g.replay_status == "parsed"),
@@ -95,10 +102,11 @@ def game_row(g: Game, full: bool = False) -> dict:
     return {
         "match_id": g.match_id,
         "session_id": g.session_id,
-        "started_at": g.started_at,
-        "finished_at": g.finished_at,
+        "started_at": _utc(g.started_at),
+        "finished_at": _utc(g.finished_at),
         "duration_real_s": g.duration_real_s,
         "duration_game_s": g.duration_game_s,
+        "speed_factor": g.speed_factor,
         "map": g.map_name,
         "map_slug": g.map_slug,
         "map_size": g.map_size,

@@ -41,17 +41,20 @@ def test_sync_result(env):
 
 def test_sessions_feed(env):
     client, _ = env
-    sessions = client.get("/api/sessions").json()
+    page = client.get("/api/sessions?limit=100").json()
+    assert page["total"] == len(page["items"])
+    sessions = page["items"]
     assert sum(s["games"] for s in sessions) == 30
     assert sessions[0]["started_at"] > sessions[-1]["started_at"]  # newest first
     latest = sessions[0]
     assert latest["wins"] + latest["losses"] == latest["games"]
+    assert latest["results"].count(True) == latest["wins"]
     assert {m["name"] for m in latest["members"]} == {"Cribbeltz", "Maverick", "Sundown", "johannesnagel"}
 
 
 def test_session_detail_and_game(env):
     client, _ = env
-    sid = client.get("/api/sessions").json()[0]["id"]
+    sid = client.get("/api/sessions").json()["items"][0]["id"]
     detail = client.get(f"/api/sessions/{sid}").json()
     assert detail["game_list"][-1]["match_id"] == 516462729
     assert detail["replays_parsed"] == 1

@@ -4,13 +4,14 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import sessionmaker
 
 from tracker.config import MEMBERS, Settings, settings as default_settings
 from tracker.db import init_db, make_engine, make_sessionmaker
+from tracker import schemas
 from tracker.models import Game, TrainingSession
 from tracker.stats import game_row, session_summary
 from tracker.sync import run_sync
@@ -58,16 +59,16 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
         if not authorization or not hmac.compare_digest(authorization, expected):
             raise HTTPException(401, "invalid admin token")
 
-    @app.get("/api/health")
+    @app.get("/api/health", response_model=schemas.Health)
     def health():
         return {"ok": True}
 
-    @app.get("/api/players")
+    @app.get("/api/players", response_model=list[schemas.Member])
     def players():
         return [{"name": m.name, "profile_id": m.profile_id} for m in MEMBERS]
 
-    @app.get("/api/sessions")
-    def list_sessions(limit: int = 20, offset: int = 0):
+    @app.get("/api/sessions", response_model=schemas.SessionPage)
+    def list_sessions(limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)):
         with Session() as db:
             rows = (
                 db.query(TrainingSession)
@@ -76,9 +77,14 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
                 .limit(limit)
                 .all()
             )
-            return [session_summary(s) for s in rows]
+            return {
+                "items": [session_summary(s) for s in rows],
+                "total": db.query(TrainingSession).count(),
+                "offset": offset,
+                "limit": limit,
+            }
 
-    @app.get("/api/sessions/{session_id}")
+    @app.get("/api/sessions/{session_id}", response_model=schemas.SessionDetail)
     def get_session(session_id: int):
         with Session() as db:
             s = db.get(TrainingSession, session_id)
@@ -86,7 +92,7 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
                 raise HTTPException(404, "session not found")
             return {**session_summary(s), "game_list": [game_row(g) for g in s.games]}
 
-    @app.get("/api/games/{match_id}")
+    @app.get("/api/games/{match_id}", response_model=schemas.GameOut)
     def get_game(match_id: int):
         with Session() as db:
             g = db.get(Game, match_id)
@@ -94,7 +100,7 @@ def create_app(settings: Settings = default_settings, Session: sessionmaker | No
                 raise HTTPException(404, "game not found")
             return game_row(g, full=True)
 
-    @app.post("/api/sync", status_code=202)
+    @app.post("/api/sync", status_code=202, response_model=schemas.Queued)
     def trigger_sync(background: BackgroundTasks, authorization: str | None = Header(default=None)):
         require_admin(authorization)
         background.add_task(run_sync, Session, settings)
