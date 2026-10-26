@@ -15,7 +15,7 @@ export function ChallengeBanner() {
     return (
       <Link
         to="/challenge"
-        className="inline-flex items-center gap-2 rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-bg shadow-sm transition-colors hover:bg-gold/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+        className="inline-flex items-center gap-2 rounded-lg bg-accent px-3.5 py-2 text-sm font-semibold text-bg shadow-sm transition-colors hover:bg-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
       >
         <span aria-hidden>⚔</span>
         Start a civ challenge
@@ -48,7 +48,7 @@ export function ChallengeBanner() {
         </div>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={ch.used} aria-valuemax={ch.total}>
-        <div className="h-full rounded-full bg-gold transition-[width] duration-700" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-accent transition-[width] duration-700" style={{ width: `${pct}%` }} />
       </div>
       <div className="mt-2 text-xs text-muted">{ch.active ? "Open the civ board →" : "See the result →"}</div>
     </Link>

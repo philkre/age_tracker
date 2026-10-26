@@ -110,7 +110,7 @@ export function SessionSplits({
                   onClick={() => onSelect(i)}
                   aria-label={`Show game ${i + 1} on the map`}
                   aria-pressed={active === i}
-                  className="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-gold"
+                  className="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:outline-accent"
                 />
               )}
             </li>

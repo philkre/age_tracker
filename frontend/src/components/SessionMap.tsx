@@ -97,7 +97,7 @@ export function SessionMap({
           params={{ matchId: String(matchId) }}
           draggable={false}
           aria-label={`Open game ${index + 1} on ${s.game_maps[index]}`}
-          className="block rounded-lg focus-visible:outline-2 focus-visible:outline-gold"
+          className="block rounded-lg focus-visible:outline-2 focus-visible:outline-accent"
         >
           {!parsed || q.isError ? (
             <div className="flex aspect-square w-full items-center justify-center p-3 text-center text-xs text-faint">
@@ -165,7 +165,7 @@ function Arrow({ label, onClick, children }: { label: string; onClick: () => voi
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid h-6 w-6 place-items-center rounded-md text-base leading-none text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-gold"
+      className="grid h-6 w-6 place-items-center rounded-md text-base leading-none text-muted hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
     >
       {children}
     </button>

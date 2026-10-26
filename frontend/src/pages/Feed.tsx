@@ -78,7 +78,7 @@ function SessionCard({ s }: { s: SessionSummary }) {
           <Link
             to="/sessions/$sessionId"
             params={{ sessionId: String(s.id) }}
-            className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-gold"
+            className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-accent"
           >
             {sessionTitle(s.started_at)}
           </Link>

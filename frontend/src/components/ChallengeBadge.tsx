@@ -11,7 +11,7 @@ export function ChallengeBadge({ c, className = "" }: { c: SessionChallenge; cla
       to="/challenge/$challengeId"
       params={{ challengeId: String(c.id) }}
       title={n ? `New civs: ${c.new_civs.map((x) => x.name).join(", ")}` : "No new civs this session"}
-      className={`inline-flex max-w-full items-center gap-1.5 rounded-full bg-gold/12 px-2.5 py-0.5 text-xs font-medium text-gold hover:bg-gold/20 ${className}`}
+      className={`inline-flex max-w-full items-center gap-1.5 rounded-full bg-accent/12 px-2.5 py-0.5 text-xs font-medium text-accent hover:bg-accent/20 ${className}`}
     >
       <span aria-hidden>⚔</span>
       <span className="truncate">{c.name}</span>

@@ -115,14 +115,14 @@ function HistoryCard({ c }: { c: ChallengeSummary }) {
         </div>
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            status === "Live" ? "bg-win/12 text-win" : status === "Completed" ? "bg-gold/12 text-gold" : "bg-surface-2 text-muted"
+            status === "Live" ? "bg-win/12 text-win" : status === "Completed" ? "bg-accent/12 text-accent" : "bg-surface-2 text-muted"
           }`}
         >
           {status}
         </span>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
-        <div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
       </div>
       <p className="tabular mt-2 text-sm text-muted">
         <span className="font-semibold text-ink">
@@ -146,7 +146,7 @@ function ResultHeader({ ch }: { ch: Challenge }) {
         {date(ch.started_at)} – {end ? date(end) : "now"}
       </p>
       <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-surface-2">
-        <div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Civs" value={`${ch.used}/${ch.total}`} sub={ch.completed_at ? "all done" : `${ch.total - ch.used} left`} />
@@ -221,7 +221,7 @@ function StartPanel({ previous }: { previous: Challenge | null }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={128}
-            className="mt-1 block w-full rounded-md border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-gold"
+            className="mt-1 block w-full rounded-md border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-accent"
           />
         </label>
         {tonight && (
@@ -234,7 +234,7 @@ function StartPanel({ previous }: { previous: Challenge | null }) {
         <button
           type="submit"
           disabled={start.isPending || !name.trim()}
-          className="justify-self-start rounded-md bg-gold px-4 py-2 text-sm font-semibold text-bg disabled:opacity-50"
+          className="justify-self-start rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg disabled:opacity-50"
         >
           {start.isPending ? "Starting…" : "Start challenge"}
         </button>
@@ -277,7 +277,7 @@ function ActiveHeader({ ch }: { ch: Challenge }) {
       </div>
 
       <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-surface-2">
-        <div className="h-full rounded-full bg-gold transition-[width] duration-700" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-accent transition-[width] duration-700" style={{ width: `${pct}%` }} />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Civs" value={`${ch.used}/${ch.total}`} sub={`${ch.total - ch.used} to go`} />
@@ -327,7 +327,7 @@ function RollCivs({ ch }: { ch: Challenge }) {
               setSeed((s) => s + 1);
               setCopied(false);
             }}
-            className="rounded-md bg-gold px-3 py-1.5 text-sm font-semibold text-bg"
+            className="rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-bg"
           >
             🎲 Roll
           </button>
@@ -395,7 +395,7 @@ function Board({ ch }: { ch: Challenge }) {
               aria-selected={filter === f}
               onClick={() => setFilter(f)}
               className={`rounded-md px-2.5 py-1 text-xs font-medium capitalize ${
-                filter === f ? "bg-gold text-bg" : "bg-surface-2 text-muted hover:text-ink"
+                filter === f ? "bg-accent text-bg" : "bg-surface-2 text-muted hover:text-ink"
               }`}
             >
               {f} <span className="tabular opacity-70">{counts[f]}</span>
@@ -414,7 +414,7 @@ function Board({ ch }: { ch: Challenge }) {
             }}
             aria-pressed={player === m.profile_id}
             className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${
-              player === m.profile_id ? "border-gold bg-gold/10 text-ink" : "border-line text-muted hover:text-ink"
+              player === m.profile_id ? "border-accent bg-accent/10 text-ink" : "border-line text-muted hover:text-ink"
             }`}
           >
             <MemberDot color={memberColor(m.profile_id)} />
@@ -448,7 +448,7 @@ function CivTile({ c }: { c: ChallengeCiv }) {
       <div className="mt-1.5 w-full truncate text-center text-xs font-medium">{c.name}</div>
       <div className="flex h-4 items-center gap-1 text-[11px]">
         {c.in_progress ? (
-          <span className="font-semibold text-gold">live</span>
+          <span className="font-semibold text-accent">live</span>
         ) : c.used ? (
           <>
             <MemberDot color={memberColor(c.profile_id!)} />
@@ -460,7 +460,7 @@ function CivTile({ c }: { c: ChallengeCiv }) {
     </>
   );
   const cls = `flex flex-col items-center rounded-lg p-2 ${
-    c.in_progress ? "bg-gold/10 ring-2 ring-gold" : c.used ? "bg-surface-2/60" : "bg-surface-2"
+    c.in_progress ? "bg-accent/10 ring-2 ring-accent" : c.used ? "bg-surface-2/60" : "bg-surface-2"
   }`;
   const title = c.used
     ? `${c.name} · ${c.player}${c.started_at ? ` · ${date(c.started_at)}` : ""} · ${

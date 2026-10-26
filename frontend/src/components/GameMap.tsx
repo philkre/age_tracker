@@ -178,7 +178,7 @@ function Pill({ active, onClick, children }: { active?: boolean; onClick: () => 
       onClick={onClick}
       aria-pressed={active}
       className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-        active ? "bg-gold text-bg" : "bg-surface-2 text-muted hover:text-ink"
+        active ? "bg-accent text-bg" : "bg-surface-2 text-muted hover:text-ink"
       }`}
     >
       {children}
@@ -197,12 +197,12 @@ function RangeSlider({
 }) {
   const [a, b] = value;
   const cls =
-    "pointer-events-none absolute inset-x-0 top-0 h-5 w-full appearance-none bg-transparent accent-[var(--color-gold)] [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto";
+    "pointer-events-none absolute inset-x-0 top-0 h-5 w-full appearance-none bg-transparent accent-[var(--color-accent)] [&::-webkit-slider-thumb]:pointer-events-auto [&::-moz-range-thumb]:pointer-events-auto";
   return (
     <div className="relative h-5">
       <div className="absolute inset-x-0 top-2 h-1 rounded-full bg-surface-2" />
       <div
-        className="absolute top-2 h-1 rounded-full bg-gold/60"
+        className="absolute top-2 h-1 rounded-full bg-accent/60"
         style={{ left: `${(100 * a) / max}%`, right: `${100 - (100 * b) / max}%` }}
       />
       <input

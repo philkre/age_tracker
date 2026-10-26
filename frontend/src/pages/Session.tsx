@@ -257,7 +257,7 @@ function Splits({ games }: { games: Game[] }) {
               aria-selected={metric === m.key}
               onClick={() => setMetric(m.key)}
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                metric === m.key ? "bg-gold text-bg" : "bg-surface-2 text-muted hover:text-ink"
+                metric === m.key ? "bg-accent text-bg" : "bg-surface-2 text-muted hover:text-ink"
               }`}
             >
               {m.label}
@@ -310,7 +310,7 @@ function Splits({ games }: { games: Game[] }) {
                     const isBest = v != null && best.get(m.profileId) === v;
                     return (
                       <td key={m.profileId} className="px-3 py-2 text-center">
-                        <span className={isBest ? "rounded bg-gold/15 px-1.5 py-0.5 font-semibold text-gold" : ""}>
+                        <span className={isBest ? "rounded bg-accent/15 px-1.5 py-0.5 font-semibold text-accent" : ""}>
                           {fmt(v, p, g)}
                         </span>
                       </td>
@@ -330,7 +330,7 @@ function Splits({ games }: { games: Game[] }) {
         </table>
       </div>
       <p className="border-t border-line px-4 py-2 text-xs text-faint">
-        Click a column to sort, a row for all 8 players. Gold = best of the session.
+        Click a column to sort, a row for all 8 players. Highlighted = best of the session.
       </p>
     </section>
   );
@@ -361,7 +361,7 @@ function GameDetail({ g }: { g: Game }) {
         <Link
           to="/games/$matchId"
           params={{ matchId: String(g.match_id) }}
-          className="rounded-md bg-gold px-2.5 py-1 text-xs font-semibold text-bg hover:bg-gold/90"
+          className="rounded-md bg-accent px-2.5 py-1 text-xs font-semibold text-bg hover:bg-accent/90"
         >
           Open game →
         </Link>

@@ -5,7 +5,7 @@
   --font-display: var(--font-sans);
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Neutral, slightly cool dark palette; accent kept under the `gold` name. */
+  /* Neutral, slightly cool dark palette. Monochrome accent: near-white on dark, near-black on light. */
   --color-bg: #09090b;
   --color-surface: #111114;
   --color-surface-2: #1a1a1f;
@@ -14,7 +14,7 @@
   --color-ink: #ececef;
   --color-muted: #8e8e99;
   --color-faint: #55555f;
-  --color-gold: #f2b84b;
+  --color-accent: #ececef;
   --color-win: #3ecf8e;
   --color-loss: #f2676a;
 
@@ -33,7 +33,7 @@
     --color-ink: #17171a;
     --color-muted: #6a6a75;
     --color-faint: #a3a3ad;
-    --color-gold: #d08c12;
+    --color-accent: #17171a;
     --color-win: #1a9e64;
     --color-loss: #dc4b4e;
   }

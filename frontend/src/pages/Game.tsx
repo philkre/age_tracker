@@ -146,7 +146,7 @@ function Scoreboard({ g, players }: { g: Game; players: GamePlayer[] }) {
             {players.map((p, i) => (
               <tr
                 key={p.profile_id}
-                className={`border-t ${i > 0 && p.team !== players[i - 1].team ? "border-gold/40" : "border-line"} ${
+                className={`border-t ${i > 0 && p.team !== players[i - 1].team ? "border-accent/40" : "border-line"} ${
                   p.team === g.our_team ? "" : "text-ink/80"
                 }`}
               >
@@ -161,7 +161,7 @@ function Scoreboard({ g, players }: { g: Game; players: GamePlayer[] }) {
                   const isBest = v != null && best.get(c.key) === v;
                   return (
                     <td key={c.key} className="px-2 py-2 text-right">
-                      <span className={isBest ? "font-semibold text-gold" : ""}>
+                      <span className={isBest ? "rounded bg-accent/15 px-1.5 py-0.5 font-semibold text-accent" : ""}>
                         {v == null ? <span className="text-faint">–</span> : c.time ? clock(convert(v, g.speed_factor)) : v}
                       </span>
                     </td>
@@ -173,7 +173,7 @@ function Scoreboard({ g, players }: { g: Game; players: GamePlayer[] }) {
         </table>
       </div>
       <p className="border-t border-line px-4 py-2 text-xs text-faint">
-        Units/vils are queue commands from the replay (cancels count). Gold = best in the game.
+        Units/vils are queue commands from the replay (cancels count). Highlighted = best in the game.
       </p>
     </section>
   );
@@ -325,7 +325,7 @@ function Timeseries({ g, players }: { g: Game; players: GamePlayer[] }) {
               aria-selected={metric === k}
               onClick={() => setMetric(k)}
               className={`rounded-md px-2.5 py-1 text-xs font-medium ${
-                metric === k ? "bg-gold text-bg" : "bg-surface-2 text-muted hover:text-ink"
+                metric === k ? "bg-accent text-bg" : "bg-surface-2 text-muted hover:text-ink"
               }`}
             >
               {label}
@@ -365,7 +365,7 @@ function Production({ g, players }: { g: Game; players: GamePlayer[] }) {
               aria-selected={x.profile_id === selected}
               onClick={() => setSelected(x.profile_id)}
               className={`flex max-w-[11rem] items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${
-                x.profile_id === selected ? "border-gold bg-gold/10 text-ink" : "border-line text-muted hover:text-ink"
+                x.profile_id === selected ? "border-accent bg-accent/10 text-ink" : "border-line text-muted hover:text-ink"
               }`}
             >
               <span className="h-2.5 w-1 shrink-0 rounded-full" style={{ background: playerColor(x.color) }} />
