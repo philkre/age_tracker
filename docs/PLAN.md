@@ -86,40 +86,58 @@ Opponents stored as `GamePlayer` without `player_id` → enables nemesis/rival s
 - Rivals: recurring opponents, record vs them.
 - Weekly recap (optional Discord webhook post after session closes).
 
-## 4. Tech stack (recommendation)
+## 4. Tech stack & website architecture
 
-4 users → keep simple, one deployable.
+Goal: public, interactive website. 4 users → one deployable, cheap to host.
 
-- **Backend:** Python + FastAPI (needed anyway since `mgz` is Python). SQLAlchemy + Alembic.
-- **DB:** Postgres (Supabase/Neon free tier) — or SQLite on a volume, fine for 4 users.
-- **Jobs:** APScheduler inside app for API polling + replay parsing (no queue needed at this scale).
-- **Frontend:** Next.js or SvelteKit + Tailwind; charts with Recharts/ECharts. Mobile-first (people check it on phone after the game).
-- **Auth:** Discord OAuth or simple magic link; whitelist the 4 accounts.
-- **Storage:** replays in S3-compatible bucket (R2/Supabase storage).
-- **Hosting:** Fly.io / Railway (backend) + Vercel (frontend), or single container.
-
-Repo layout:
 ```
-backend/   app/{api,models,importers,replay,stats}  tests/
-frontend/  app/{feed,session/[id],game/[id],player/[name]}
-docs/
+Browser (SPA) ──/api──▶ FastAPI ──▶ SQLite (volume) + replay zips (volume)
+                         └─ background sync loop (import → group → parse)
 ```
+
+- **Backend (done, Phase 1):** FastAPI + SQLAlchemy + SQLite, vendored patched `mgz`, sync loop in-process.
+- **Frontend:** Vite + React + TypeScript SPA in `frontend/`.
+  - Routing/data: TanStack Router + TanStack Query (cache, background refetch, instant back-nav).
+  - Styling: Tailwind. Mobile-first (checked on phones after games), dark mode (AoE vibe).
+  - Charts: Apache ECharts — built-in hover tooltips, zoom/brush, legend toggles, linked charts.
+  - Typed API: FastAPI OpenAPI schema → `openapi-typescript` → typed client. Needs Pydantic response models on endpoints (do when frontend starts).
+- **Deploy:** single Docker image; FastAPI serves `/api/*` and the built SPA (`TRACKER_STATIC_DIR`, SPA fallback to `index.html`). Fly.io machine + volume for `data/` (one instance — SQLite + in-process sync assume that).
+- **Access:** site read-only & public (or behind a shared link/basic auth). Mutating endpoints (`POST /api/sync`) need `TRACKER_ADMIN_TOKEN`. Discord login later if social features (kudos/comments) come.
+- **Dev:** `vite` on :5173 proxies `/api` → :8000 (CORS also allowed for localhost:5173).
+
+### Interactive features (what makes it more than a report)
+
+- **Feed:** Strava-style session cards, infinite scroll, filter by date range / map / player.
+- **Session page:** "splits" table per game (sortable, best values highlighted), ELO line across the night per player (hover = game details), click game → game page.
+- **Game page:** 8-player scoreboard; age-up timeline (Gantt per player, hover times); resources/objects-over-time chart with player toggles + zoom; unit/building/tech breakdown with player selector; real-time ⇄ game-time toggle.
+- **Player page:** ELO history (zoom/brush), win rate by civ/map/position (heatmap, click → filtered games), age-up trend with rolling average, personal records.
+- **Compare mode:** pick 2–4 players, overlay their stats/trends.
+- **Team page:** lineup/position win rates, civ combo table, map pool.
+- **Live-ish:** "sync now" button (admin), polling while a session is in progress → new games appear without reload.
+
+### API additions needed for the site
+
+- `GET /api/players/{id}` (+ `/history`, `/records`) — per-player aggregates and time series.
+- `GET /api/games?map=&civ=&player=&from=&to=` — filterable game list (drives heatmap click-through).
+- `GET /api/stats/team` — lineups, civ combos, maps.
+- Pagination metadata on list endpoints; Pydantic response models for typed client.
+- Cache headers / ETag on read endpoints (data changes only on sync).
 
 ## 5. Key implementation details
 
 - **Session grouping:** cluster matches containing ≥2 of the 4 profile ids; new session if gap > 2h from previous game. Allow manual merge/split.
 - **Idempotency:** unique on `(external match_id)`; re-parse replay is safe (upsert).
-- **Derived stats** computed on write into `session_stats` / `player_stats` tables (cheap reads for feed).
+- **Derived stats** computed on read for now (tiny data); move to cached tables if pages get slow.
 - **Civ/map names:** map ids → names via dataset from aoe2companion/`aoe2techtree` JSON, versioned per patch.
 - **Testing:** fixture replays + recorded API responses (no live calls in tests); TDD on grouping, PR detection, stat derivation.
 
 ## 6. Milestones
 
-1. Spike + data model + importer → see last week's session in the DB.
-2. Feed + session page deployed → first real use after next game night.
-3. Replay parsing + game page.
-4. Kudos/comments/PRs.
-5. Analytics dashboards.
+1. ✅ Spike + data model + importer + grouping + replay parsing + API (backend Phase 1).
+2. Frontend skeleton + feed + session page, Docker + Fly deploy → first real use after next game night.
+3. Game page with interactive charts.
+4. Player pages, compare mode, team analytics.
+5. Social layer (kudos/comments/PRs) — needs login.
 
 ## 7. Open questions
 

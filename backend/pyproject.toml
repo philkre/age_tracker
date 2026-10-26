@@ -1,0 +1,30 @@
+[project]
+name = "aoe-tracker"
+version = "0.1.0"
+description = "Strava-style training tracker for our AoE2:DE 4v4 sessions"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
+    "sqlalchemy>=2.0",
+    "httpx>=0.27",
+    # runtime deps of vendored mgz
+    "aocref>=2.0.35",
+    "construct==2.8.16",
+    "tabulate>=0.9.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tracker", "vendor/mgz"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+filterwarnings = ["ignore::SyntaxWarning"]

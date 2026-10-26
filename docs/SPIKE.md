@@ -18,7 +18,7 @@
 - Returns ranked `rm_team` games incl. all 8 players: civ, team, color, slot, `rating`, `ratingDiff`, `won`.
 - Match meta: `matchId`, `started`, `finished`, `map`/`mapName`, `mapSize`, `patch`, `server`, `leaderboard`, `speedFactor` (1.7), lots of lobby settings.
 - History goes back years (page 8 @ 100/page reached 2020).
-- Last 30 games: **all 30 had all 4 of us together**, team RM. ~10 games/day over a weekend → "session" = cluster of games, not one per week.
+- Last 30 games: **all 30 had all 4 of us together**, team RM. (That weekend was a training camp, not the norm — normal is one session per week.) Session = cluster of games separated by a time gap → weekly nights group naturally.
 - TODO: confirm whether `rating` is pre- or post-game (compare consecutive games).
 
 ## 2. Replay download ✅
