@@ -1,23 +1,46 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Cinzel", ui-serif, Georgia, serif;
+@theme static {
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
 
-  --color-bg: #0f0d0a;
-  --color-surface: #1a1712;
-  --color-surface-2: #241f18;
-  --color-line: #3a3227;
-  --color-ink: #f1e9da;
-  --color-muted: #a99d89;
-  --color-faint: #6f6555;
-  --color-gold: #e0a43a;
-  --color-win: #5fbf7f;
-  --color-loss: #e0604f;
+  /* Neutral, slightly cool dark palette; accent kept under the `gold` name. */
+  --color-bg: #09090b;
+  --color-surface: #111114;
+  --color-surface-2: #1a1a1f;
+  --color-line: #232329;
+  --color-grid: #1c1c21;
+  --color-ink: #ececef;
+  --color-muted: #8e8e99;
+  --color-faint: #55555f;
+  --color-gold: #f2b84b;
+  --color-win: #3ecf8e;
+  --color-loss: #f2676a;
+
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+}
+
+/* Light palette, following the OS setting. */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg: #f6f6f7;
+    --color-surface: #ffffff;
+    --color-surface-2: #f0f0f2;
+    --color-line: #e3e3e8;
+    --color-grid: #efeff2;
+    --color-ink: #17171a;
+    --color-muted: #6a6a75;
+    --color-faint: #a3a3ad;
+    --color-gold: #d08c12;
+    --color-win: #1a9e64;
+    --color-loss: #dc4b4e;
+  }
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 
 body {
@@ -25,8 +48,36 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Session route draws in left to right, like a replayed track. */
+@keyframes route-reveal {
+  from {
+    clip-path: inset(-8px 100% -8px -8px);
+  }
+  to {
+    clip-path: inset(-8px -8px -8px -8px);
+  }
+}
+
+.route-reveal {
+  animation: route-reveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-reveal {
+    animation: none;
+  }
 }

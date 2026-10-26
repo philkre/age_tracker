@@ -50,6 +50,11 @@ def test_sessions_feed(env):
     assert latest["wins"] + latest["losses"] == latest["games"]
     assert latest["results"].count(True) == latest["wins"]
     assert {m["name"] for m in latest["members"]} == {"Cribbeltz", "Maverick", "Sundown", "johannesnagel"}
+    assert len(latest["durations_s"]) == latest["games"]
+    for m in latest["members"]:
+        assert len(m["rating_path"]) == latest["games"] + 1
+        if m["rating_delta"] is not None and None not in m["rating_path"]:
+            assert m["rating_path"][-1] - m["rating_path"][0] == m["rating_delta"]
 
 
 def test_session_detail_and_game(env):

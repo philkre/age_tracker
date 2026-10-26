@@ -26,6 +26,7 @@ class MemberSummary(BaseModel):
     best_castle_s: float | None
     villagers_queued: int
     military_queued: int
+    rating_path: list[int | None]  # before game 1, then after each game
 
 
 class SessionSummary(BaseModel):
@@ -37,6 +38,7 @@ class SessionSummary(BaseModel):
     losses: int
     results: list[bool | None]  # per game, in order
     play_time_s: float
+    durations_s: list[float]  # real-time length per game, in order
     maps: list[str]
     replays_parsed: int
     members: list[MemberSummary]

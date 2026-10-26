@@ -5,6 +5,7 @@ import { sessionsQuery, type SessionSummary } from "../api/client";
 import { clock, date, hours, pct, sessionTitle, time } from "../lib/format";
 import { memberColor } from "../lib/members";
 import { useTimeMode } from "../lib/timeMode";
+import { SessionRoute } from "../components/SessionRoute";
 import { Delta, ErrorBox, MemberDot, ResultStrip, Spinner, Stat } from "../components/ui";
 
 export function Feed() {
@@ -31,7 +32,7 @@ export function Feed() {
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <h1 className="font-display text-2xl font-bold">Sessions</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Sessions</h1>
         <span className="text-sm text-muted">{total} total</span>
       </div>
       {sessions.length === 0 && (
@@ -66,7 +67,7 @@ function SessionCard({ s }: { s: SessionSummary }) {
     <Link
       to="/sessions/$sessionId"
       params={{ sessionId: String(s.id) }}
-      className="block rounded-xl border border-line bg-surface p-4 transition-colors hover:border-gold/60 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-gold sm:p-5"
+      className="block rounded-xl border border-line bg-surface p-4 transition-colors hover:border-faint hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-gold sm:p-5"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
@@ -77,6 +78,8 @@ function SessionCard({ s }: { s: SessionSummary }) {
         </div>
         <ResultStrip results={s.results} />
       </div>
+
+      <SessionRoute s={s} />
 
       <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
         <Stat label="Record" value={`${s.wins}–${s.losses}`} sub={`${pct(s.wins, s.wins + s.losses)} wins`} />

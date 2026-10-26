@@ -243,6 +243,8 @@ export interface components {
             villagers_queued: number;
             /** Military Queued */
             military_queued: number;
+            /** Rating Path */
+            rating_path: (number | null)[];
         };
         /** Queued */
         Queued: {
@@ -294,6 +296,8 @@ export interface components {
             results: (boolean | null)[];
             /** Play Time S */
             play_time_s: number;
+            /** Durations S */
+            durations_s: number[];
             /** Maps */
             maps: string[];
             /** Replays Parsed */
@@ -338,6 +342,8 @@ export interface components {
             results: (boolean | null)[];
             /** Play Time S */
             play_time_s: number;
+            /** Durations S */
+            durations_s: number[];
             /** Maps */
             maps: string[];
             /** Replays Parsed */

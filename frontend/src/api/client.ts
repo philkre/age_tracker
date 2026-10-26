@@ -37,6 +37,12 @@ export const sessionsQuery = infiniteQueryOptions({
   refetchInterval: 60_000,
 });
 
+export const gameQuery = (matchId: number) =>
+  queryOptions({
+    queryKey: ["game", matchId],
+    queryFn: () => get<Game>(`/games/${matchId}`),
+  });
+
 export const sessionQuery = (id: number) =>
   queryOptions({
     queryKey: ["session", id],

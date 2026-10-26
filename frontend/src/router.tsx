@@ -5,21 +5,22 @@ import { Feed } from "./pages/Feed";
 
 // Session page pulls in ECharts; keep it out of the feed bundle.
 const SessionPage = lazy(() => import("./pages/Session").then((m) => ({ default: m.SessionPage })));
+const GamePage = lazy(() => import("./pages/Game").then((m) => ({ default: m.GamePage })));
 
 const rootRoute = createRootRoute({
   component: () => (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-10 border-b border-line bg-bg/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-line/70 bg-bg/75 backdrop-blur-xl backdrop-saturate-150">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="" className="h-7 w-7" />
-            <span className="font-display text-lg font-bold tracking-wide">
-              TopGun <span className="text-gold">Training</span>
+            <img src="/favicon.svg" alt="" className="h-6 w-6" />
+            <span className="text-[15px] font-semibold tracking-tight">
+              TopGun <span className="font-normal text-muted">Training</span>
             </span>
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto max-w-5xl px-4 py-8">
         <Outlet />
       </main>
     </div>
@@ -42,8 +43,21 @@ const sessionRoute = createRoute({
   },
 });
 
+const gameRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/games/$matchId",
+  component: function GameRoute() {
+    const { matchId } = gameRoute.useParams();
+    return (
+      <Suspense fallback={<Spinner />}>
+        <GamePage matchId={Number(matchId)} />
+      </Suspense>
+    );
+  },
+});
+
 export const router = createRouter({
-  routeTree: rootRoute.addChildren([feedRoute, sessionRoute]),
+  routeTree: rootRoute.addChildren([feedRoute, sessionRoute, gameRoute]),
   defaultPreload: "intent",
   scrollRestoration: true,
 });

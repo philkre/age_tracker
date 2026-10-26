@@ -27,7 +27,7 @@ export function SessionPage({ sessionId }: { sessionId: number }) {
         </Link>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-2xl font-bold sm:text-3xl">{sessionTitle(s.started_at)}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{sessionTitle(s.started_at)}</h1>
             <p className="tabular text-muted">
               {date(s.started_at)} · {time(s.started_at)}–{time(s.ended_at)}
             </p>
@@ -90,30 +90,30 @@ function EloChart({ session }: { session: SessionDetail }) {
     return {
       backgroundColor: "transparent",
       grid: { left: 44, right: 12, top: 36, bottom: 28 },
-      legend: { top: 0, textStyle: { color: "#a99d89" }, icon: "circle", itemWidth: 9 },
+      legend: { top: 0, textStyle: { color: "var(--color-muted)" }, icon: "circle", itemWidth: 9 },
       xAxis: {
         type: "category",
         data: labels,
         boundaryGap: false,
-        axisLine: { lineStyle: { color: "#3a3227" } },
-        axisLabel: { color: "#a99d89" },
+        axisLine: { lineStyle: { color: "var(--color-line)" } },
+        axisLabel: { color: "var(--color-muted)" },
       },
       yAxis: {
         type: "value",
         scale: true,
-        splitLine: { lineStyle: { color: "#2a241c" } },
-        axisLabel: { color: "#a99d89" },
+        splitLine: { lineStyle: { color: "var(--color-grid)" } },
+        axisLabel: { color: "var(--color-muted)" },
       },
       tooltip: {
         trigger: "axis",
-        backgroundColor: "#241f18",
-        borderColor: "#3a3227",
-        textStyle: { color: "#f1e9da" },
+        backgroundColor: "var(--color-surface)",
+        borderColor: "var(--color-line)",
+        textStyle: { color: "var(--color-ink)" },
         formatter: (params: { dataIndex: number; seriesName: string; value: number | null; color: string }[]) => {
           const i = params[0]?.dataIndex ?? 0;
           if (i === 0) return `<b>Start</b><br/>${rows(params, () => "")}`;
           const g = games[i - 1];
-          const head = `<b>G${i} · ${g.map}</b> <span style="color:${g.won ? "#5fbf7f" : "#e0604f"}">${
+          const head = `<b>G${i} · ${g.map}</b> <span style="color:${g.won ? "var(--color-win)" : "var(--color-loss)"}">${
             g.won == null ? "" : g.won ? "Win" : "Loss"
           }</span>`;
           return `${head}<br/>${rows(params, (name) => {
@@ -145,7 +145,7 @@ function rows(
 function MemberCard({ m }: { m: MemberSummary }) {
   const { convert } = useTimeMode();
   return (
-    <div className="rounded-xl border border-line bg-surface p-4" style={{ borderTopColor: memberColor(m.profile_id), borderTopWidth: 3 }}>
+    <div className="rounded-xl border border-line bg-surface p-4" style={{ borderTopColor: memberColor(m.profile_id), borderTopWidth: 2 }}>
       <div className="flex items-center justify-between gap-2">
         <h3 className="truncate font-semibold">{m.name}</h3>
         <Delta value={m.rating_delta} />
@@ -155,15 +155,15 @@ function MemberCard({ m }: { m: MemberSummary }) {
       </p>
       <dl className="tabular mt-3 grid grid-cols-3 gap-2 text-sm">
         <div>
-          <dt className="text-[11px] uppercase tracking-wider text-muted">eAPM</dt>
+          <dt className="text-xs text-muted">eAPM</dt>
           <dd className="font-semibold">{m.avg_eapm ?? "–"}</dd>
         </div>
         <div>
-          <dt className="text-[11px] uppercase tracking-wider text-muted">Best feudal</dt>
+          <dt className="text-xs text-muted">Best feudal</dt>
           <dd className="font-semibold">{clock(convert(m.best_feudal_s))}</dd>
         </div>
         <div>
-          <dt className="text-[11px] uppercase tracking-wider text-muted">Best castle</dt>
+          <dt className="text-xs text-muted">Best castle</dt>
           <dd className="font-semibold">{clock(convert(m.best_castle_s))}</dd>
         </div>
       </dl>
@@ -349,10 +349,19 @@ function GameDetail({ g }: { g: Game }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted">
-        Started {time(g.started_at)} · {clock(g.duration_real_s)} real
-        {g.duration_game_s != null && ` / ${clock(g.duration_game_s)} game`} · replay {g.replay_status}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted">
+          Started {time(g.started_at)} · {clock(g.duration_real_s)} real
+          {g.duration_game_s != null && ` / ${clock(g.duration_game_s)} game`} · replay {g.replay_status}
+        </p>
+        <Link
+          to="/games/$matchId"
+          params={{ matchId: String(g.match_id) }}
+          className="rounded-md bg-gold px-2.5 py-1 text-xs font-semibold text-bg hover:bg-gold/90"
+        >
+          Open game →
+        </Link>
+      </div>
       <div className="grid gap-3 lg:grid-cols-2">
         {teams.map((team, ti) => (
           <div key={ti} className="overflow-x-auto rounded-lg border border-line">

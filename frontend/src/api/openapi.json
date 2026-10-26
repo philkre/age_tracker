@@ -766,6 +766,20 @@
           "military_queued": {
             "type": "integer",
             "title": "Military Queued"
+          },
+          "rating_path": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Rating Path"
           }
         },
         "type": "object",
@@ -784,7 +798,8 @@
           "avg_castle_s",
           "best_castle_s",
           "villagers_queued",
-          "military_queued"
+          "military_queued",
+          "rating_path"
         ],
         "title": "MemberSummary"
       },
@@ -899,6 +914,13 @@
             "type": "number",
             "title": "Play Time S"
           },
+          "durations_s": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Durations S"
+          },
           "maps": {
             "items": {
               "type": "string"
@@ -935,6 +957,7 @@
           "losses",
           "results",
           "play_time_s",
+          "durations_s",
           "maps",
           "replays_parsed",
           "members",
@@ -1019,6 +1042,13 @@
             "type": "number",
             "title": "Play Time S"
           },
+          "durations_s": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Durations S"
+          },
           "maps": {
             "items": {
               "type": "string"
@@ -1048,6 +1078,7 @@
           "losses",
           "results",
           "play_time_s",
+          "durations_s",
           "maps",
           "replays_parsed",
           "members"

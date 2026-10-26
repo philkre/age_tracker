@@ -5,8 +5,8 @@ import { useTimeMode } from "../lib/timeMode";
 export function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
   return (
     <div className="min-w-0">
-      <div className="text-[11px] font-medium uppercase tracking-wider text-muted">{label}</div>
-      <div className="tabular truncate text-xl font-semibold sm:text-2xl">{value}</div>
+      <div className="text-xs font-medium text-muted">{label}</div>
+      <div className="tabular mt-0.5 truncate text-xl font-semibold tracking-tight sm:text-2xl">{value}</div>
       {sub != null && <div className="tabular text-xs text-muted">{sub}</div>}
     </div>
   );
@@ -53,14 +53,14 @@ export function MemberDot({ color }: { color: string }) {
 export function TimeModeToggle() {
   const { mode, setMode } = useTimeMode();
   return (
-    <div className="inline-flex rounded-md border border-line p-0.5 text-xs" role="group" aria-label="Time display">
+    <div className="inline-flex rounded-lg bg-surface-2 p-0.5 text-xs" role="group" aria-label="Time display">
       {(["game", "real"] as const).map((m) => (
         <button
           key={m}
           onClick={() => setMode(m)}
           aria-pressed={mode === m}
-          className={`rounded px-2 py-1 transition-colors ${
-            mode === m ? "bg-surface-2 text-ink" : "text-muted hover:text-ink"
+          className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+            mode === m ? "bg-line text-ink shadow-sm" : "text-muted hover:text-ink"
           }`}
         >
           {m === "game" ? "Game time" : "Real time"}
