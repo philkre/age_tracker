@@ -76,6 +76,21 @@ def test_site_password_protects_everything_but_health(tmp_path):
     assert client.get("/api/sessions", headers=auth("maverick", "hunter2")).status_code == 200
 
 
+def test_site_password_leaves_icons_open(tmp_path):
+    # Safari favourites and home-screen installs fetch these without credentials.
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("<div id=app></div>")
+    icons = ("favicon.svg", "apple-touch-icon.png", "icon-192.png", "icon-512.png", "site.webmanifest")
+    for name in icons:
+        (dist / name).write_bytes(b"icon")
+    client = make_client(tmp_path, site_password="hunter2", static_dir=str(dist))
+
+    for name in icons:
+        assert client.get(f"/{name}").status_code == 200, name
+    assert client.get("/app-icon.svg").status_code == 401
+
+
 def test_no_site_password_means_open(tmp_path):
     client = make_client(tmp_path)
     assert client.get("/api/sessions").status_code == 200

@@ -46,7 +46,15 @@ async def _sync_loop(Session: sessionmaker, settings: Settings) -> None:
         await asyncio.sleep(SYNC_TICK_S)
 
 
-OPEN_PATHS = frozenset({"/api/health"})  # Fly health checks
+OPEN_PATHS = frozenset({
+    "/api/health",  # Fly health checks
+    # Icons: Safari favourites and home-screen installs fetch these without credentials.
+    "/favicon.svg",
+    "/apple-touch-icon.png",
+    "/icon-192.png",
+    "/icon-512.png",
+    "/site.webmanifest",
+})
 
 
 def _add_site_password(app: FastAPI, settings: Settings) -> None:
