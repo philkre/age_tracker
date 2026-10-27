@@ -1,5 +1,7 @@
 """Download replays by match id and extract per-player stats with (patched) mgz."""
 
+import ctypes
+import gc
 import io
 import json
 import logging
@@ -211,10 +213,31 @@ def apply_stats(game: Game, stats: dict) -> None:
                 setattr(gp, key, value)
 
 
+try:  # glibc (the Linux server); absent on macOS, where this is a no-op
+    _malloc_trim = ctypes.CDLL("libc.so.6").malloc_trim
+except (OSError, AttributeError):
+    _malloc_trim = None
+
+
+def _release(db: Session) -> None:
+    """Free what one replay used before parsing the next.
+
+    A parse briefly allocates ~60 MB of small objects but retains almost nothing (measured with
+    tracemalloc). The allocator keeps the freed memory reserved, though, so a long run's RSS kept
+    climbing (~4 MB per replay) until a 100-replay backlog hit the 512 MB machine limit. Dropping the
+    session's objects, collecting mgz's reference cycles and handing free pages back to the OS keeps
+    each run flat.
+    """
+    db.expunge_all()
+    gc.collect()
+    if _malloc_trim is not None:
+        _malloc_trim(0)
+
+
 def process_pending(db: Session, client: httpx.Client, replay_dir: Path, limit: int = 20) -> list[int]:
-    """Download + parse replays for finished games. Returns parsed match ids."""
-    games = (
-        db.query(Game)
+    """Download + parse replays for finished games, one at a time. Returns parsed match ids."""
+    rows = (
+        db.query(Game.match_id)
         .filter(
             Game.replay_status == ReplayStatus.PENDING,
             Game.finished_at.is_not(None),
@@ -224,51 +247,65 @@ def process_pending(db: Session, client: httpx.Client, replay_dir: Path, limit: 
         .limit(limit)
         .all()
     )
+    ids = [match_id for (match_id,) in rows]
     parsed = []
-    for game in games:
-        # Our POVs first, then everyone else's.
-        pids = [p.profile_id for p in sorted(game.players, key=lambda p: not p.is_member)]
-        path = replay_dir / f"{game.match_id}.zip"
+    for match_id in ids:
+        game = db.get(Game, match_id)
         try:
-            if not path.exists():
-                download_replay(client, game.match_id, pids, path)
-        except ReplayNotFound:
-            game.replay_status = ReplayStatus.UNAVAILABLE
-            db.commit()
-            continue
-        except httpx.HTTPError as e:
-            game.replay_attempts += 1
-            game.replay_error = f"download: {e}"
-            log.warning("replay download failed for %s: %s", game.match_id, e)
-            db.commit()
-            continue
-
-        game.replay_path = str(path)
-        try:
-            apply_stats(game, extract_stats(path))
-        except Exception as e:  # mgz raises all sorts on format changes
-            game.replay_status = ReplayStatus.FAILED
-            game.replay_error = f"parse: {type(e).__name__}: {e}"
-            log.warning("replay parse failed for %s: %s", game.match_id, e)
-        else:
-            game.replay_status = ReplayStatus.PARSED
-            game.replay_error = None
-            parsed.append(game.match_id)
-        db.commit()
+            if _process_one(db, client, replay_dir, game):
+                parsed.append(match_id)
+        finally:
+            _release(db)
     return parsed
 
 
+def _process_one(db: Session, client: httpx.Client, replay_dir: Path, game: Game) -> bool:
+    # Our POVs first, then everyone else's.
+    pids = [p.profile_id for p in sorted(game.players, key=lambda p: not p.is_member)]
+    path = replay_dir / f"{game.match_id}.zip"
+    try:
+        if not path.exists():
+            download_replay(client, game.match_id, pids, path)
+    except ReplayNotFound:
+        game.replay_status = ReplayStatus.UNAVAILABLE
+        db.commit()
+        return False
+    except httpx.HTTPError as e:
+        game.replay_attempts += 1
+        game.replay_error = f"download: {e}"
+        log.warning("replay download failed for %s: %s", game.match_id, e)
+        db.commit()
+        return False
+
+    game.replay_path = str(path)
+    try:
+        apply_stats(game, extract_stats(path))
+    except Exception as e:  # mgz raises all sorts on format changes
+        game.replay_status = ReplayStatus.FAILED
+        game.replay_error = f"parse: {type(e).__name__}: {e}"
+        log.warning("replay parse failed for %s: %s", game.match_id, e)
+        db.commit()
+        return False
+    game.replay_status = ReplayStatus.PARSED
+    game.replay_error = None
+    db.commit()
+    return True
+
+
 def reparse(db: Session, limit: int | None = None) -> list[int]:
-    """Re-extract stats from already downloaded replays (after extractor changes)."""
-    q = db.query(Game).filter(Game.replay_status == ReplayStatus.PARSED, Game.replay_path.is_not(None))
+    """Re-extract stats from already downloaded replays (after extractor changes), one at a time."""
+    q = db.query(Game.match_id).filter(Game.replay_status == ReplayStatus.PARSED, Game.replay_path.is_not(None))
+    ids = [match_id for (match_id,) in (q.limit(limit) if limit else q).all()]
     done = []
-    for game in q.limit(limit).all() if limit else q.all():
+    for match_id in ids:
+        game = db.get(Game, match_id)
         try:
             apply_stats(game, extract_stats(Path(game.replay_path)))
+            db.commit()
+            done.append(match_id)
         except Exception as e:
-            log.warning("reparse failed for %s: %s", game.match_id, e)
-            continue
-        db.commit()
-        done.append(game.match_id)
+            db.rollback()
+            log.warning("reparse failed for %s: %s", match_id, e)
+        finally:
+            _release(db)
     return done
-
