@@ -258,7 +258,7 @@ function AgeTimeline({ g, players }: { g: Game; players: GamePlayer[] }) {
 
 // Economy units (matches the backend's ECO_UNITS); everything else queued counts as army.
 const ECO_UNITS = new Set(["Villager", "Fishing Ship", "Trade Cart", "Trade Cog", "Transport Ship"]);
-const ARMY_SLOTS = 7; // categorical colours; further unit types fold into "Other"
+const ARMY_SLOTS = 7; // categorical colours; a player's further unit types fold into "Other"
 const GRID_S = 15; // composition chart sampling step, game seconds
 
 type Queue = [number, string, number];
@@ -444,11 +444,21 @@ function ArmyComposition({ g, p, armyTypes }: { g: Game; p: GamePlayer; armyType
   const option = useMemo<ChartOption | null>(() => {
     const army = queuesOf(p).filter(([, unit]) => !ECO_UNITS.has(unit));
     if (army.length === 0) return null;
-    const slot = (unit: string) => {
-      const i = armyTypes.indexOf(unit);
-      return i >= 0 && i < ARMY_SLOTS ? unit : "Other";
-    };
-    const groups = [...armyTypes.slice(0, ARMY_SLOTS), "Other"].filter((k) => army.some(([, u]) => slot(u) === k));
+    // This player's own unit types, most queued first: the top ones get a name, the rest fold into Other.
+    const own = new Map<string, number>();
+    for (const [, unit, n] of army) own.set(unit, (own.get(unit) ?? 0) + n);
+    const ranked = [...own].sort((a, b) => b[1] - a[1]).map(([unit]) => unit);
+    const rank = (unit: string) => armyTypes.indexOf(unit);
+    const named = ranked.slice(0, ARMY_SLOTS).sort((a, b) => rank(a) - rank(b)); // stack in game-wide order
+    const folded = ranked.length - named.length;
+    const other = folded > 0 ? `Other (${folded} ${folded === 1 ? "type" : "types"})` : null;
+    // Colours: the game's most-built types keep their slot across players; this player's others take free slots.
+    const colour = new Map<string, number>();
+    for (const unit of named) if (rank(unit) < ARMY_SLOTS) colour.set(unit, rank(unit));
+    const free = [...Array(ARMY_SLOTS).keys()].filter((i) => ![...colour.values()].includes(i));
+    for (const unit of named) if (!colour.has(unit)) colour.set(unit, free.shift()!);
+    const slot = (unit: string) => (colour.has(unit) ? unit : other!);
+    const groups = other ? [...named, other] : named;
     // Shared time grid so the stack lines up across series.
     const end = g.duration_game_s ?? army[army.length - 1][0];
     const grid: number[] = [];
@@ -471,7 +481,7 @@ function ArmyComposition({ g, p, armyTypes }: { g: Game; p: GamePlayer; armyType
         showSymbol: false,
         areaStyle: { opacity: 0.9 },
         lineStyle: { width: 1, color: "var(--color-surface)" },
-        itemStyle: { color: k === "Other" ? "var(--color-faint)" : `var(--color-series-${armyTypes.indexOf(k) + 1})` },
+        itemStyle: { color: k === other ? "var(--color-faint)" : `var(--color-series-${colour.get(k)! + 1})` },
         emphasis: { focus: "series" },
         data,
       };
